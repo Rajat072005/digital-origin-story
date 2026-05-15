@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useSpring, useTransform, useScroll } from "motion/react";
+import { motion, useMotionValue, useSpring, useTransform, useScroll, type MotionValue } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import swingAvatar from "@/assets/hero-swing.png";
 
@@ -65,9 +65,9 @@ export function Hero() {
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
-          background: useTransform(
-            [lightX, lightY] as never,
-            ([lx, ly]: number[]) =>
+          background: useTransform<number, string>(
+            [lightX, lightY],
+            ([lx, ly]) =>
               `radial-gradient(ellipse 70% 55% at ${lx}% ${ly}%, color-mix(in oklab, var(--electric) 16%, transparent), transparent 65%), radial-gradient(ellipse 50% 40% at ${100 - lx}% ${100 - ly}%, color-mix(in oklab, var(--crimson) 14%, transparent), transparent 70%)`,
           ),
         }}
@@ -177,10 +177,10 @@ export function Hero() {
 type SwingProps = {
   phase: "swing" | "land" | "done";
   parallax: {
-    x: ReturnType<typeof useTransform>;
-    y: ReturnType<typeof useTransform>;
-    rx: ReturnType<typeof useTransform>;
-    ry: ReturnType<typeof useTransform>;
+    x: MotionValue<number>;
+    y: MotionValue<number>;
+    rx: MotionValue<number>;
+    ry: MotionValue<number>;
   };
 };
 
