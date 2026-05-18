@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   Suspense,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -13,10 +12,6 @@ import * as THREE from "three";
 
 useGLTF.preload("/models/spiderman_optimized.glb");
 useGLTF.preload("/models/avatar_mcu.glb");
-
-const SPIDER_IDLE = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
-const SPIDER_PERSONALITY = "SK_1036_1036001_Lobby|Lobby_Half_Personality";
-const AVATAR_BREATH = "mixamo.com";
 
 type Phase = "boot" | "spider" | "burst" | "avatar";
 
@@ -185,10 +180,10 @@ function Scene({
 
       <Suspense fallback={null}>
         {(phase === "spider" || phase === "burst" || phase === "boot") && (
-          <SpiderModel phase={phase} mouse={mouse} />
+          <SpiderManModel />
         )}
         {phase === "burst" && <DisintegrationBurst />}
-        {phase === "avatar" && <AvatarModel mouse={mouse} />}
+        {phase === "avatar" && <AvatarModel />}
       </Suspense>
     </>
   );
