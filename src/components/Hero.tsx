@@ -619,34 +619,50 @@ function AvatarTypography() {
 
 /* ---------------- Cipher / scramble text ---------------- */
 
-const CIPHER = "!<>-_\\/[]{}—=+*^?#________ABCDEF0123456789";
+const CIPHER = "!@#$%&*<>?/\\{}[]=+-_^~";
 function ScrambleText({ text, delay = 0 }: { text: string; delay?: number }) {
-  const [display, setDisplay] = useState("");
+  const [display, setDisplay] = useState(() =>
+    text
+      .split("")
+      .map((c) => (c === " " ? " " : CIPHER[Math.floor(Math.random() * CIPHER.length)]))
+      .join(""),
+  );
   useEffect(() => {
     let raf = 0;
-    const start = performance.now() + delay * 1000;
+    let interval = 0;
+    const startAt = performance.now() + delay * 1000;
     const duration = 800;
-    const tick = (now: number) => {
-      const t = Math.max(0, Math.min(1, (now - start) / duration));
-      let out = "";
-      for (let i = 0; i < text.length; i++) {
-        const reveal = t * text.length;
-        if (i < Math.floor(reveal)) {
-          out += text[i];
-        } else if (text[i] === " ") {
-          out += " ";
-        } else {
-          out += CIPHER[Math.floor(Math.random() * CIPHER.length)];
+    let locked: boolean[] = new Array(text.length).fill(false);
+
+    const wait = setTimeout(() => {
+      // Rapid symbol cycling for 0.8s, progressively locking letters.
+      interval = window.setInterval(() => {
+        const now = performance.now();
+        const t = Math.min(1, (now - startAt) / duration);
+        const lockCount = Math.floor(t * text.length);
+        locked = locked.map((_, i) => i < lockCount);
+        const out = text
+          .split("")
+          .map((c, i) => {
+            if (locked[i] || c === " ") return c;
+            return CIPHER[Math.floor(Math.random() * CIPHER.length)];
+          })
+          .join("");
+        setDisplay(out);
+        if (t >= 1) {
+          setDisplay(text);
+          clearInterval(interval);
         }
-      }
-      setDisplay(out);
-      if (t < 1) raf = requestAnimationFrame(tick);
-      else setDisplay(text);
+      }, 45);
+    }, delay * 1000);
+
+    return () => {
+      clearTimeout(wait);
+      clearInterval(interval);
+      cancelAnimationFrame(raf);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
   }, [text, delay]);
-  return <span className="font-mono">{display || text.replace(/./g, "•")}</span>;
+  return <span className="font-mono">{display}</span>;
 }
 
 function MaskedSlide({ text, delay = 0 }: { text: string; delay?: number }) {
