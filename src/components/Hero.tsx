@@ -1,6 +1,7 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import { useGLTF, useAnimations, Environment } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
+import { Leva, useControls } from "leva";
 import {
   Suspense,
   useEffect,
@@ -77,6 +78,8 @@ export function Hero() {
 
       {/* R3F Canvas */}
       {mounted && (
+        <>
+        <Leva collapsed />
         <Canvas
           dpr={[1, 2]}
           gl={{
@@ -96,6 +99,7 @@ export function Hero() {
             <Environment preset="night" />
           </Suspense>
         </Canvas>
+        </>
       )}
 
       {/* UI overlay */}
@@ -181,7 +185,7 @@ function Scene({
 
       <Suspense fallback={null}>
         {(phase === "spider" || phase === "burst" || phase === "boot") && (
-          <SpiderManModel />
+          <SpiderManModel isCrackingNeck={phase === "burst"} />
         )}
         {phase === "burst" && <DisintegrationBurst />}
         {phase === "avatar" && <AvatarModel />}
