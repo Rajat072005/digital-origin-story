@@ -266,86 +266,26 @@ function OrbitalRings({
 
 /* ---------------- Spider-Man ---------------- */
 
-function SpiderModel({
-  phase,
-  mouse,
-}: {
-  phase: Phase;
-  mouse: React.MutableRefObject<{ x: number; y: number }>;
-}) {
+function SpiderManModel(props: ModelGroupProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
-  const { actions } = useAnimations(animations, group);
-  const headBone = useRef<THREE.Object3D | null>(null);
-  const spineBone = useRef<THREE.Object3D | null>(null);
-  const fadeRef = useRef(1);
+  const { actions, names } = useAnimations(animations, group);
 
-  useLayoutEffect(() => {
-    scene.traverse((o) => {
-      const n = o.name.toLowerCase();
-      if (!headBone.current && n.includes("head")) headBone.current = o;
-      if (
-        !spineBone.current &&
-        (n.includes("spine2") || n.includes("spine_02") || n.includes("chest"))
-      ) {
-        spineBone.current = o;
-      }
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        m.frustumCulled = false;
-        const mat = m.material as THREE.MeshStandardMaterial;
-        if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.9;
-      }
-    });
-  }, [scene]);
-
-  // Force the first animation to play (Idle)
   useEffect(() => {
-    const actionName = Object.keys(actions)[0];
-    if (actionName && actions[actionName]) {
-      actions[actionName]!.reset().fadeIn(0.5).play();
-    }
-  }, [actions]);
+    console.log("Spider-Man Animations Array:", names);
+    console.log("Spider-Man Raw Animations:", animations);
+    console.log("Spider-Man Scene:", scene);
 
-  useFrame((_, dt) => {
-    if (headBone.current) {
-      headBone.current.rotation.y = THREE.MathUtils.lerp(
-        headBone.current.rotation.y,
-        mouse.current.x * 0.35,
-        0.08,
-      );
-      headBone.current.rotation.x = THREE.MathUtils.lerp(
-        headBone.current.rotation.x,
-        -mouse.current.y * 0.25,
-        0.08,
-      );
-    }
-    if (spineBone.current) {
-      spineBone.current.rotation.y = THREE.MathUtils.lerp(
-        spineBone.current.rotation.y,
-        mouse.current.x * 0.12,
-        0.06,
-      );
-    }
-    if (phase === "burst") {
-      fadeRef.current = Math.max(0, fadeRef.current - dt * 1.4);
+    if (names && names.length > 0) {
+      console.log("Attempting to play:", names[0]);
+      actions[names[0]]?.reset().play();
     } else {
-      fadeRef.current = Math.min(1, fadeRef.current + dt * 2);
+      console.error("CRITICAL ERROR: No animations found in Spider-Man GLB!");
     }
-    scene.traverse((o) => {
-      const m = o as THREE.Mesh;
-      if (m.isMesh) {
-        const mat = m.material as THREE.MeshStandardMaterial;
-        if (mat) {
-          mat.transparent = fadeRef.current < 1;
-          mat.opacity = fadeRef.current;
-        }
-      }
-    });
-  });
+  }, [actions, animations, names, scene]);
 
   return (
-    <group ref={group} dispose={null}>
+    <group ref={group} {...props} dispose={null}>
       <primitive object={scene} scale={1} position={[0, -1, 0]} />
     </group>
   );
@@ -353,65 +293,27 @@ function SpiderModel({
 
 /* ---------------- Avatar (MCU) ---------------- */
 
-function AvatarModel({
-  mouse,
-}: {
-  mouse: React.MutableRefObject<{ x: number; y: number }>;
-}) {
+function AvatarModel(props: ModelGroupProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
-  const { actions } = useAnimations(animations, group);
-  const headBone = useRef<THREE.Object3D | null>(null);
-  const spineBone = useRef<THREE.Object3D | null>(null);
+  const { actions, names } = useAnimations(animations, group);
 
-  useLayoutEffect(() => {
-    scene.traverse((o) => {
-      const n = o.name.toLowerCase();
-      if (!headBone.current && n.includes("head")) headBone.current = o;
-      if (!spineBone.current && (n.includes("spine2") || n.includes("chest"))) {
-        spineBone.current = o;
-      }
-      const m = o as THREE.Mesh;
-      if (m.isMesh) m.frustumCulled = false;
-    });
-  }, [scene]);
-
-  // Force the breathing loop to play
   useEffect(() => {
-    const actionName = Object.keys(actions)[0];
-    if (actionName && actions[actionName]) {
-      const a = actions[actionName]!;
-      a.reset().fadeIn(0.5).play();
-      a.setLoop(THREE.LoopRepeat, Infinity);
-    }
-  }, [actions]);
+    console.log("Avatar Animations Array:", names);
+    console.log("Avatar Raw Animations:", animations);
+    console.log("Avatar Scene:", scene);
 
-  useFrame(() => {
-    if (headBone.current) {
-      headBone.current.rotation.y = THREE.MathUtils.lerp(
-        headBone.current.rotation.y,
-        mouse.current.x * 0.28,
-        0.08,
-      );
-      headBone.current.rotation.x = THREE.MathUtils.lerp(
-        headBone.current.rotation.x,
-        -mouse.current.y * 0.18,
-        0.08,
-      );
+    if (names && names.length > 0) {
+      console.log("Attempting to play:", names[0]);
+      actions[names[0]]?.reset().play();
+    } else {
+      console.error("CRITICAL ERROR: No animations found in Avatar GLB!");
     }
-    if (spineBone.current) {
-      spineBone.current.rotation.y = THREE.MathUtils.lerp(
-        spineBone.current.rotation.y,
-        mouse.current.x * 0.08,
-        0.06,
-      );
-    }
-  });
+  }, [actions, animations, names, scene]);
 
   return (
-    <group ref={group} dispose={null}>
-      {/* Medium Close-Up framing */}
-      <primitive object={scene} scale={1.4} position={[0, -1.1, 0.6]} />
+    <group ref={group} {...props} dispose={null}>
+      <primitive object={scene} scale={1} position={[0, -1, 0]} />
     </group>
   );
 }
