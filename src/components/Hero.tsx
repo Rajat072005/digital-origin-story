@@ -162,7 +162,7 @@ function Scene({
   return (
     <>
       {/* Three-point lighting */}
-      <ambientLight intensity={0.18} />
+      <ambientLight intensity={0.85} />
       {/* Key */}
       <KeyLight phase={phase} />
       {/* Rim — neon red + blue */}
@@ -179,7 +179,7 @@ function Scene({
         distance={12}
       />
       {/* Fill */}
-      <directionalLight position={[0, 3, 5]} intensity={0.25} color="#cfe0ff" />
+      <directionalLight position={[0, 3, 5]} intensity={0.6} color="#cfe0ff" />
 
       <OrbitalRings phase={phase} mouse={mouse} />
 
@@ -279,62 +279,60 @@ function SpiderModel({
 }) {
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const group = useRef<THREE.Group>(null);
-  const { actions, mixer } = useAnimations(animations, group);
+  const { actions, names } = useAnimations(animations, group);
   const visibleRef = useRef(true);
   const headBone = useRef<THREE.Object3D | null>(null);
   const spineBone = useRef<THREE.Object3D | null>(null);
+  const [fit, setFit] = useState<{ scale: number; offsetY: number }>({
+    scale: 1,
+    offsetY: 0,
+  });
 
-  // Find head + spine bones for parallax
+  // Auto-fit model to a known target height (~2 units) and ground it.
   useLayoutEffect(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+    const targetHeight = 2.2;
+    const s = size.y > 0 ? targetHeight / size.y : 1;
+    setFit({ scale: s, offsetY: -box.min.y * s });
+
     scene.traverse((o) => {
       const n = o.name.toLowerCase();
       if (!headBone.current && n.includes("head")) headBone.current = o;
-      if (!spineBone.current && (n.includes("spine2") || n.includes("spine_02") || n.includes("chest"))) {
+      if (
+        !spineBone.current &&
+        (n.includes("spine2") || n.includes("spine_02") || n.includes("chest"))
+      ) {
         spineBone.current = o;
       }
-    });
-    // Make all materials respond to lighting nicely
-    scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) {
+        m.frustumCulled = false;
         m.castShadow = false;
         m.receiveShadow = false;
         const mat = m.material as THREE.MeshStandardMaterial;
-        if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.6;
+        if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.9;
       }
     });
   }, [scene]);
 
-  // Play idle, switch to personality on burst
+  // Force-play first available animation track
   useEffect(() => {
-    const idle = actions[SPIDER_IDLE];
-    const personality = actions[SPIDER_PERSONALITY];
-    if (phase === "spider" || phase === "boot") {
-      idle?.reset().fadeIn(0.4).play();
-      personality?.stop();
-    } else if (phase === "burst") {
-      if (personality && idle) {
-        personality.reset().play();
-        personality.crossFadeFrom(idle, 0.35, false);
-      } else {
-        personality?.reset().fadeIn(0.3).play();
-      }
-    }
+    if (names.length === 0) return;
+    const trackName =
+      names.find((n) => n.toLowerCase().includes("idle")) || names[0];
+    const action = actions[trackName];
+    action?.reset().fadeIn(0.5).play();
     return () => {
-      idle?.fadeOut(0.3);
-      personality?.fadeOut(0.3);
+      action?.fadeOut(0.3);
     };
-  }, [phase, actions]);
+  }, [actions, names]);
 
-  // Hide model after burst dissolves
+  // Mouse parallax
   useFrame(() => {
-    if (!group.current) return;
-    if (phase === "burst") {
-      // dissolve via scale + opacity ramp ~ last 0.7s of burst window
-      const t = Math.min(1, (performance.now() % 1e9) / 1e9);
-      // we time visually with explicit fade below
-    }
-    // Mouse parallax — head + spine
     if (headBone.current) {
       headBone.current.rotation.y = THREE.MathUtils.lerp(
         headBone.current.rotation.y,
@@ -381,7 +379,11 @@ function SpiderModel({
   if (!visibleRef.current && phase === "avatar") return null;
 
   return (
-    <group ref={group} position={[0, 0, 0]}>
+    <group
+      ref={group}
+      position={[0, -1 + fit.offsetY, 0]}
+      scale={[fit.scale, fit.scale, fit.scale]}
+    >
       <primitive object={scene} />
     </group>
   );
@@ -396,63 +398,51 @@ function AvatarModel({
 }) {
   const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
   const group = useRef<THREE.Group>(null);
-  const { actions, mixer } = useAnimations(animations, group);
+  const { actions, names } = useAnimations(animations, group);
   const headBone = useRef<THREE.Object3D | null>(null);
   const spineBone = useRef<THREE.Object3D | null>(null);
+  const [fit, setFit] = useState<{ scale: number; offsetY: number }>({
+    scale: 1,
+    offsetY: 0,
+  });
 
   useLayoutEffect(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const targetHeight = 2.2;
+    const s = size.y > 0 ? targetHeight / size.y : 1;
+    setFit({ scale: s, offsetY: -box.min.y * s });
+
     scene.traverse((o) => {
       const n = o.name.toLowerCase();
       if (!headBone.current && n.includes("head")) headBone.current = o;
       if (!spineBone.current && (n.includes("spine2") || n.includes("chest"))) {
         spineBone.current = o;
       }
+      const m = o as THREE.Mesh;
+      if (m.isMesh) m.frustumCulled = false;
     });
   }, [scene]);
 
-  // Seamless breathing crossfade loop
+  // Force-play first available animation track — required to break T-pose
   useEffect(() => {
-    const breath = actions[AVATAR_BREATH] || Object.values(actions)[0];
-    if (!breath) return;
-    breath.reset().fadeIn(0.6).play();
-    breath.setLoop(THREE.LoopRepeat, Infinity);
-    breath.clampWhenFinished = false;
-
-    // Cross-fade trick — at end of each loop, briefly fade weight up/down
-    const dur = breath.getClip().duration;
-    let last = 0;
-    const onTime = () => {
-      const t = breath.time % dur;
-      // when nearing the end, blend the weight toward 0 then back to 1
-      const tailWindow = Math.min(0.35, dur * 0.15);
-      if (t > dur - tailWindow) {
-        const k = (t - (dur - tailWindow)) / tailWindow;
-        // ease out
-        breath.setEffectiveWeight(1 - k * 0.35);
-      } else if (t < 0.35 && last > dur - 0.5) {
-        // first frames — fade weight back in
-        const k = Math.min(1, t / 0.25);
-        breath.setEffectiveWeight(0.65 + k * 0.35);
-      } else {
-        breath.setEffectiveWeight(1);
-      }
-      last = t;
-    };
-    const unsub = mixer.addEventListener("loop", onTime);
-    const id = setInterval(onTime, 16);
+    if (names.length === 0) return;
+    const action = actions[names[0]];
+    if (!action) return;
+    action.reset().fadeIn(0.5).play();
+    action.setLoop(THREE.LoopRepeat, Infinity);
     return () => {
-      clearInterval(id);
-      mixer.removeEventListener("loop", onTime as never);
-      breath.fadeOut(0.4);
+      action.fadeOut(0.3);
     };
-  }, [actions, mixer]);
+  }, [actions, names]);
 
   // Parallax + entry
   const enterRef = useRef(0);
   useFrame((_, dt) => {
     enterRef.current = Math.min(1, enterRef.current + dt * 1.6);
     if (group.current) {
-      const s = THREE.MathUtils.lerp(0.92, 1, enterRef.current);
+      const s = THREE.MathUtils.lerp(0.92, 1, enterRef.current) * fit.scale;
       group.current.scale.setScalar(s);
     }
     if (headBone.current) {
@@ -477,7 +467,7 @@ function AvatarModel({
   });
 
   return (
-    <group ref={group} position={[0, 0, 0]}>
+    <group ref={group} position={[0, -1 + fit.offsetY, 0]}>
       <primitive object={scene} />
     </group>
   );
@@ -629,34 +619,50 @@ function AvatarTypography() {
 
 /* ---------------- Cipher / scramble text ---------------- */
 
-const CIPHER = "!<>-_\\/[]{}—=+*^?#________ABCDEF0123456789";
+const CIPHER = "!@#$%&*<>?/\\{}[]=+-_^~";
 function ScrambleText({ text, delay = 0 }: { text: string; delay?: number }) {
-  const [display, setDisplay] = useState("");
+  const [display, setDisplay] = useState(() =>
+    text
+      .split("")
+      .map((c) => (c === " " ? " " : CIPHER[Math.floor(Math.random() * CIPHER.length)]))
+      .join(""),
+  );
   useEffect(() => {
     let raf = 0;
-    const start = performance.now() + delay * 1000;
+    let interval = 0;
+    const startAt = performance.now() + delay * 1000;
     const duration = 800;
-    const tick = (now: number) => {
-      const t = Math.max(0, Math.min(1, (now - start) / duration));
-      let out = "";
-      for (let i = 0; i < text.length; i++) {
-        const reveal = t * text.length;
-        if (i < Math.floor(reveal)) {
-          out += text[i];
-        } else if (text[i] === " ") {
-          out += " ";
-        } else {
-          out += CIPHER[Math.floor(Math.random() * CIPHER.length)];
+    let locked: boolean[] = new Array(text.length).fill(false);
+
+    const wait = setTimeout(() => {
+      // Rapid symbol cycling for 0.8s, progressively locking letters.
+      interval = window.setInterval(() => {
+        const now = performance.now();
+        const t = Math.min(1, (now - startAt) / duration);
+        const lockCount = Math.floor(t * text.length);
+        locked = locked.map((_, i) => i < lockCount);
+        const out = text
+          .split("")
+          .map((c, i) => {
+            if (locked[i] || c === " ") return c;
+            return CIPHER[Math.floor(Math.random() * CIPHER.length)];
+          })
+          .join("");
+        setDisplay(out);
+        if (t >= 1) {
+          setDisplay(text);
+          clearInterval(interval);
         }
-      }
-      setDisplay(out);
-      if (t < 1) raf = requestAnimationFrame(tick);
-      else setDisplay(text);
+      }, 45);
+    }, delay * 1000);
+
+    return () => {
+      clearTimeout(wait);
+      clearInterval(interval);
+      cancelAnimationFrame(raf);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
   }, [text, delay]);
-  return <span className="font-mono">{display || text.replace(/./g, "•")}</span>;
+  return <span className="font-mono">{display}</span>;
 }
 
 function MaskedSlide({ text, delay = 0 }: { text: string; delay?: number }) {
