@@ -398,63 +398,51 @@ function AvatarModel({
 }) {
   const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
   const group = useRef<THREE.Group>(null);
-  const { actions, mixer } = useAnimations(animations, group);
+  const { actions, names } = useAnimations(animations, group);
   const headBone = useRef<THREE.Object3D | null>(null);
   const spineBone = useRef<THREE.Object3D | null>(null);
+  const [fit, setFit] = useState<{ scale: number; offsetY: number }>({
+    scale: 1,
+    offsetY: 0,
+  });
 
   useLayoutEffect(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const targetHeight = 2.2;
+    const s = size.y > 0 ? targetHeight / size.y : 1;
+    setFit({ scale: s, offsetY: -box.min.y * s });
+
     scene.traverse((o) => {
       const n = o.name.toLowerCase();
       if (!headBone.current && n.includes("head")) headBone.current = o;
       if (!spineBone.current && (n.includes("spine2") || n.includes("chest"))) {
         spineBone.current = o;
       }
+      const m = o as THREE.Mesh;
+      if (m.isMesh) m.frustumCulled = false;
     });
   }, [scene]);
 
-  // Seamless breathing crossfade loop
+  // Force-play first available animation track — required to break T-pose
   useEffect(() => {
-    const breath = actions[AVATAR_BREATH] || Object.values(actions)[0];
-    if (!breath) return;
-    breath.reset().fadeIn(0.6).play();
-    breath.setLoop(THREE.LoopRepeat, Infinity);
-    breath.clampWhenFinished = false;
-
-    // Cross-fade trick — at end of each loop, briefly fade weight up/down
-    const dur = breath.getClip().duration;
-    let last = 0;
-    const onTime = () => {
-      const t = breath.time % dur;
-      // when nearing the end, blend the weight toward 0 then back to 1
-      const tailWindow = Math.min(0.35, dur * 0.15);
-      if (t > dur - tailWindow) {
-        const k = (t - (dur - tailWindow)) / tailWindow;
-        // ease out
-        breath.setEffectiveWeight(1 - k * 0.35);
-      } else if (t < 0.35 && last > dur - 0.5) {
-        // first frames — fade weight back in
-        const k = Math.min(1, t / 0.25);
-        breath.setEffectiveWeight(0.65 + k * 0.35);
-      } else {
-        breath.setEffectiveWeight(1);
-      }
-      last = t;
-    };
-    const unsub = mixer.addEventListener("loop", onTime);
-    const id = setInterval(onTime, 16);
+    if (names.length === 0) return;
+    const action = actions[names[0]];
+    if (!action) return;
+    action.reset().fadeIn(0.5).play();
+    action.setLoop(THREE.LoopRepeat, Infinity);
     return () => {
-      clearInterval(id);
-      mixer.removeEventListener("loop", onTime as never);
-      breath.fadeOut(0.4);
+      action.fadeOut(0.3);
     };
-  }, [actions, mixer]);
+  }, [actions, names]);
 
   // Parallax + entry
   const enterRef = useRef(0);
   useFrame((_, dt) => {
     enterRef.current = Math.min(1, enterRef.current + dt * 1.6);
     if (group.current) {
-      const s = THREE.MathUtils.lerp(0.92, 1, enterRef.current);
+      const s = THREE.MathUtils.lerp(0.92, 1, enterRef.current) * fit.scale;
       group.current.scale.setScalar(s);
     }
     if (headBone.current) {
@@ -479,7 +467,7 @@ function AvatarModel({
   });
 
   return (
-    <group ref={group} position={[0, 0, 0]}>
+    <group ref={group} position={[0, -1 + fit.offsetY, 0]}>
       <primitive object={scene} />
     </group>
   );
