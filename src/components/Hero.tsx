@@ -277,28 +277,14 @@ function SpiderModel({
   phase: Phase;
   mouse: React.MutableRefObject<{ x: number; y: number }>;
 }) {
-  const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const group = useRef<THREE.Group>(null);
-  const { actions, names } = useAnimations(animations, group);
-  const visibleRef = useRef(true);
+  const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
+  const { actions } = useAnimations(animations, group);
   const headBone = useRef<THREE.Object3D | null>(null);
   const spineBone = useRef<THREE.Object3D | null>(null);
-  const [fit, setFit] = useState<{ scale: number; offsetY: number }>({
-    scale: 1,
-    offsetY: 0,
-  });
+  const fadeRef = useRef(1);
 
-  // Auto-fit model to a known target height (~2 units) and ground it.
   useLayoutEffect(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
-    const targetHeight = 2.2;
-    const s = size.y > 0 ? targetHeight / size.y : 1;
-    setFit({ scale: s, offsetY: -box.min.y * s });
-
     scene.traverse((o) => {
       const n = o.name.toLowerCase();
       if (!headBone.current && n.includes("head")) headBone.current = o;
@@ -311,28 +297,21 @@ function SpiderModel({
       const m = o as THREE.Mesh;
       if (m.isMesh) {
         m.frustumCulled = false;
-        m.castShadow = false;
-        m.receiveShadow = false;
         const mat = m.material as THREE.MeshStandardMaterial;
         if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.9;
       }
     });
   }, [scene]);
 
-  // Force-play first available animation track
+  // Force the first animation to play (Idle)
   useEffect(() => {
-    if (names.length === 0) return;
-    const trackName =
-      names.find((n) => n.toLowerCase().includes("idle")) || names[0];
-    const action = actions[trackName];
-    action?.reset().fadeIn(0.5).play();
-    return () => {
-      action?.fadeOut(0.3);
-    };
-  }, [actions, names]);
+    const actionName = Object.keys(actions)[0];
+    if (actionName && actions[actionName]) {
+      actions[actionName]!.reset().fadeIn(0.5).play();
+    }
+  }, [actions]);
 
-  // Mouse parallax
-  useFrame(() => {
+  useFrame((_, dt) => {
     if (headBone.current) {
       headBone.current.rotation.y = THREE.MathUtils.lerp(
         headBone.current.rotation.y,
@@ -352,14 +331,9 @@ function SpiderModel({
         0.06,
       );
     }
-  });
-
-  // Fade out at end of burst
-  const fadeRef = useRef(1);
-  useFrame((_, dt) => {
     if (phase === "burst") {
       fadeRef.current = Math.max(0, fadeRef.current - dt * 1.4);
-    } else if (phase === "spider" || phase === "boot") {
+    } else {
       fadeRef.current = Math.min(1, fadeRef.current + dt * 2);
     }
     scene.traverse((o) => {
@@ -367,24 +341,16 @@ function SpiderModel({
       if (m.isMesh) {
         const mat = m.material as THREE.MeshStandardMaterial;
         if (mat) {
-          mat.transparent = true;
+          mat.transparent = fadeRef.current < 1;
           mat.opacity = fadeRef.current;
-          mat.depthWrite = fadeRef.current > 0.5;
         }
       }
     });
-    if (phase === "avatar") visibleRef.current = false;
   });
 
-  if (!visibleRef.current && phase === "avatar") return null;
-
   return (
-    <group
-      ref={group}
-      position={[0, -1 + fit.offsetY, 0]}
-      scale={[fit.scale, fit.scale, fit.scale]}
-    >
-      <primitive object={scene} />
+    <group ref={group} dispose={null}>
+      <primitive object={scene} scale={1} position={[0, -1, 0]} />
     </group>
   );
 }
@@ -396,24 +362,13 @@ function AvatarModel({
 }: {
   mouse: React.MutableRefObject<{ x: number; y: number }>;
 }) {
-  const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
   const group = useRef<THREE.Group>(null);
-  const { actions, names } = useAnimations(animations, group);
+  const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
+  const { actions } = useAnimations(animations, group);
   const headBone = useRef<THREE.Object3D | null>(null);
   const spineBone = useRef<THREE.Object3D | null>(null);
-  const [fit, setFit] = useState<{ scale: number; offsetY: number }>({
-    scale: 1,
-    offsetY: 0,
-  });
 
   useLayoutEffect(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    const targetHeight = 2.2;
-    const s = size.y > 0 ? targetHeight / size.y : 1;
-    setFit({ scale: s, offsetY: -box.min.y * s });
-
     scene.traverse((o) => {
       const n = o.name.toLowerCase();
       if (!headBone.current && n.includes("head")) headBone.current = o;
@@ -425,26 +380,17 @@ function AvatarModel({
     });
   }, [scene]);
 
-  // Force-play first available animation track — required to break T-pose
+  // Force the breathing loop to play
   useEffect(() => {
-    if (names.length === 0) return;
-    const action = actions[names[0]];
-    if (!action) return;
-    action.reset().fadeIn(0.5).play();
-    action.setLoop(THREE.LoopRepeat, Infinity);
-    return () => {
-      action.fadeOut(0.3);
-    };
-  }, [actions, names]);
-
-  // Parallax + entry
-  const enterRef = useRef(0);
-  useFrame((_, dt) => {
-    enterRef.current = Math.min(1, enterRef.current + dt * 1.6);
-    if (group.current) {
-      const s = THREE.MathUtils.lerp(0.92, 1, enterRef.current) * fit.scale;
-      group.current.scale.setScalar(s);
+    const actionName = Object.keys(actions)[0];
+    if (actionName && actions[actionName]) {
+      const a = actions[actionName]!;
+      a.reset().fadeIn(0.5).play();
+      a.setLoop(THREE.LoopRepeat, Infinity);
     }
+  }, [actions]);
+
+  useFrame(() => {
     if (headBone.current) {
       headBone.current.rotation.y = THREE.MathUtils.lerp(
         headBone.current.rotation.y,
@@ -467,8 +413,9 @@ function AvatarModel({
   });
 
   return (
-    <group ref={group} position={[0, -1 + fit.offsetY, 0]}>
-      <primitive object={scene} />
+    <group ref={group} dispose={null}>
+      {/* Medium Close-Up framing */}
+      <primitive object={scene} scale={1.4} position={[0, -1.1, 0.6]} />
     </group>
   );
 }
