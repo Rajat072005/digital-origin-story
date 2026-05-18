@@ -1,6 +1,7 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import { useGLTF, useAnimations, Environment } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
+import { Leva, useControls } from "leva";
 import {
   Suspense,
   useEffect,
@@ -15,6 +16,7 @@ useGLTF.preload("/models/avatar_mcu.glb");
 
 type Phase = "boot" | "spider" | "burst" | "avatar";
 type ModelGroupProps = ThreeElements["group"];
+type SpiderManModelProps = ModelGroupProps & { isCrackingNeck: boolean };
 
 export function Hero() {
   const [phase, setPhase] = useState<Phase>("boot");
@@ -77,6 +79,8 @@ export function Hero() {
 
       {/* R3F Canvas */}
       {mounted && (
+        <>
+        <Leva collapsed />
         <Canvas
           dpr={[1, 2]}
           gl={{
@@ -96,6 +100,7 @@ export function Hero() {
             <Environment preset="night" />
           </Suspense>
         </Canvas>
+        </>
       )}
 
       {/* UI overlay */}
@@ -181,7 +186,7 @@ function Scene({
 
       <Suspense fallback={null}>
         {(phase === "spider" || phase === "burst" || phase === "boot") && (
-          <SpiderManModel />
+          <SpiderManModel isCrackingNeck={phase === "burst"} />
         )}
         {phase === "burst" && <DisintegrationBurst />}
         {phase === "avatar" && <AvatarModel />}
@@ -266,27 +271,33 @@ function OrbitalRings({
 
 /* ---------------- Spider-Man ---------------- */
 
-function SpiderManModel(props: ModelGroupProps) {
+function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
-  const { actions, names } = useAnimations(animations, group);
+  const { actions } = useAnimations(animations, group);
+  const { scale, positionX, positionY, positionZ } = useControls("Spider-Man", {
+    scale: { value: 1, min: 0.001, max: 3, step: 0.001 },
+    positionX: { value: 0, min: -5, max: 5, step: 0.01 },
+    positionY: { value: -1, min: -5, max: 5, step: 0.01 },
+    positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
+  });
 
   useEffect(() => {
-    console.log("Spider-Man Animations Array:", names);
-    console.log("Spider-Man Raw Animations:", animations);
-    console.log("Spider-Man Scene:", scene);
+    const idleAnim = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
+    const crackAnim = "SK_1036_1036001_Lobby|Lobby_Half_Personality";
 
-    if (names && names.length > 0) {
-      console.log("Attempting to play:", names[0]);
-      actions[names[0]]?.reset().play();
-    } else {
-      console.error("CRITICAL ERROR: No animations found in Spider-Man GLB!");
+    if (isCrackingNeck && actions[crackAnim]) {
+      actions[idleAnim]?.fadeOut(0.2);
+      actions[crackAnim].reset().fadeIn(0.2).setLoop(THREE.LoopOnce, 1).play();
+      actions[crackAnim].clampWhenFinished = true;
+    } else if (actions[idleAnim]) {
+      actions[idleAnim].reset().fadeIn(0.2).play();
     }
-  }, [actions, animations, names, scene]);
+  }, [actions, isCrackingNeck]);
 
   return (
     <group ref={group} {...props} dispose={null}>
-      <primitive object={scene} scale={1} position={[0, -1, 0]} />
+      <primitive object={scene} scale={scale} position={[positionX, positionY, positionZ]} />
     </group>
   );
 }
@@ -296,24 +307,25 @@ function SpiderManModel(props: ModelGroupProps) {
 function AvatarModel(props: ModelGroupProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
-  const { actions, names } = useAnimations(animations, group);
+  const { actions } = useAnimations(animations, group);
+  const { scale, positionX, positionY, positionZ } = useControls("Avatar", {
+    scale: { value: 1, min: 0.001, max: 3, step: 0.001 },
+    positionX: { value: 0, min: -5, max: 5, step: 0.01 },
+    positionY: { value: -1, min: -5, max: 5, step: 0.01 },
+    positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
+  });
 
   useEffect(() => {
-    console.log("Avatar Animations Array:", names);
-    console.log("Avatar Raw Animations:", animations);
-    console.log("Avatar Scene:", scene);
-
-    if (names && names.length > 0) {
-      console.log("Attempting to play:", names[0]);
-      actions[names[0]]?.reset().play();
-    } else {
-      console.error("CRITICAL ERROR: No animations found in Avatar GLB!");
+    const breatheAnim = "mixamo.com.001";
+    if (actions[breatheAnim]) {
+      // Crossfade loop to prevent snapping
+      actions[breatheAnim].reset().fadeIn(0.5).play();
     }
-  }, [actions, animations, names, scene]);
+  }, [actions]);
 
   return (
     <group ref={group} {...props} dispose={null}>
-      <primitive object={scene} scale={1} position={[0, -1, 0]} />
+      <primitive object={scene} scale={scale} position={[positionX, positionY, positionZ]} />
     </group>
   );
 }
