@@ -279,62 +279,60 @@ function SpiderModel({
 }) {
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const group = useRef<THREE.Group>(null);
-  const { actions, mixer } = useAnimations(animations, group);
+  const { actions, names } = useAnimations(animations, group);
   const visibleRef = useRef(true);
   const headBone = useRef<THREE.Object3D | null>(null);
   const spineBone = useRef<THREE.Object3D | null>(null);
+  const [fit, setFit] = useState<{ scale: number; offsetY: number }>({
+    scale: 1,
+    offsetY: 0,
+  });
 
-  // Find head + spine bones for parallax
+  // Auto-fit model to a known target height (~2 units) and ground it.
   useLayoutEffect(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    box.getSize(size);
+    box.getCenter(center);
+    const targetHeight = 2.2;
+    const s = size.y > 0 ? targetHeight / size.y : 1;
+    setFit({ scale: s, offsetY: -box.min.y * s });
+
     scene.traverse((o) => {
       const n = o.name.toLowerCase();
       if (!headBone.current && n.includes("head")) headBone.current = o;
-      if (!spineBone.current && (n.includes("spine2") || n.includes("spine_02") || n.includes("chest"))) {
+      if (
+        !spineBone.current &&
+        (n.includes("spine2") || n.includes("spine_02") || n.includes("chest"))
+      ) {
         spineBone.current = o;
       }
-    });
-    // Make all materials respond to lighting nicely
-    scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) {
+        m.frustumCulled = false;
         m.castShadow = false;
         m.receiveShadow = false;
         const mat = m.material as THREE.MeshStandardMaterial;
-        if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.6;
+        if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.9;
       }
     });
   }, [scene]);
 
-  // Play idle, switch to personality on burst
+  // Force-play first available animation track
   useEffect(() => {
-    const idle = actions[SPIDER_IDLE];
-    const personality = actions[SPIDER_PERSONALITY];
-    if (phase === "spider" || phase === "boot") {
-      idle?.reset().fadeIn(0.4).play();
-      personality?.stop();
-    } else if (phase === "burst") {
-      if (personality && idle) {
-        personality.reset().play();
-        personality.crossFadeFrom(idle, 0.35, false);
-      } else {
-        personality?.reset().fadeIn(0.3).play();
-      }
-    }
+    if (names.length === 0) return;
+    const trackName =
+      names.find((n) => n.toLowerCase().includes("idle")) || names[0];
+    const action = actions[trackName];
+    action?.reset().fadeIn(0.5).play();
     return () => {
-      idle?.fadeOut(0.3);
-      personality?.fadeOut(0.3);
+      action?.fadeOut(0.3);
     };
-  }, [phase, actions]);
+  }, [actions, names]);
 
-  // Hide model after burst dissolves
+  // Mouse parallax
   useFrame(() => {
-    if (!group.current) return;
-    if (phase === "burst") {
-      // dissolve via scale + opacity ramp ~ last 0.7s of burst window
-      const t = Math.min(1, (performance.now() % 1e9) / 1e9);
-      // we time visually with explicit fade below
-    }
-    // Mouse parallax — head + spine
     if (headBone.current) {
       headBone.current.rotation.y = THREE.MathUtils.lerp(
         headBone.current.rotation.y,
@@ -381,7 +379,11 @@ function SpiderModel({
   if (!visibleRef.current && phase === "avatar") return null;
 
   return (
-    <group ref={group} position={[0, 0, 0]}>
+    <group
+      ref={group}
+      position={[0, -1 + fit.offsetY, 0]}
+      scale={[fit.scale, fit.scale, fit.scale]}
+    >
       <primitive object={scene} />
     </group>
   );
