@@ -1,348 +1,675 @@
-import { motion, useMotionValue, useSpring, useTransform, useScroll, type MotionValue } from "motion/react";
-import { useEffect, useRef, useState } from "react";
-import swingAvatar from "@/assets/hero-swing.png";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useGLTF, useAnimations, Environment } from "@react-three/drei";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import * as THREE from "three";
 
-/**
- * Unified cinematic hero.
- * One avatar, one pendulum rig — the web, the body, the shadow and lighting all
- * move together as a single physical system. After landing, the entire scene
- * reacts subtly to the mouse for cinematic depth.
- */
+useGLTF.preload("/models/spiderman_optimized.glb");
+useGLTF.preload("/models/avatar_mcu.glb");
+
+const SPIDER_IDLE = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
+const SPIDER_PERSONALITY = "SK_1036_1036001_Lobby|Lobby_Half_Personality";
+const AVATAR_BREATH = "mixamo.com";
+
+type Phase = "boot" | "spider" | "burst" | "avatar";
+
 export function Hero() {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const heroFade = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-  const heroLift = useTransform(scrollYProgress, [0, 1], [0, -80]);
-
-  const [phase, setPhase] = useState<"swing" | "land" | "done">("swing");
+  const [phase, setPhase] = useState<Phase>("boot");
+  const [mounted, setMounted] = useState(false);
+  const mouse = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("land"), 2200);
-    const t2 = setTimeout(() => setPhase("done"), 3000);
+    setMounted(true);
+    const onMove = (e: MouseEvent) => {
+      mouse.current.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouse.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener("mousemove", onMove);
+    const t = setTimeout(() => setPhase("spider"), 1400);
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      window.removeEventListener("mousemove", onMove);
+      clearTimeout(t);
     };
   }, []);
 
-  // Mouse parallax — subtle, only after landing.
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const sx = useSpring(mx, { stiffness: 60, damping: 18, mass: 0.6 });
-  const sy = useSpring(my, { stiffness: 60, damping: 18, mass: 0.6 });
-
-  useEffect(() => {
-    if (phase !== "done") return;
-    const onMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      mx.set(x);
-      my.set(y);
-    };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, [phase, mx, my]);
-
-  const bgX = useTransform(sx, (v) => v * -18);
-  const bgY = useTransform(sy, (v) => v * -10);
-  const avatarRotY = useTransform(sx, (v) => v * 6);
-  const avatarRotX = useTransform(sy, (v) => v * -4);
-  const avatarX = useTransform(sx, (v) => v * 12);
-  const avatarY = useTransform(sy, (v) => v * 8);
-  const lightX = useTransform(sx, (v) => 50 + v * 20);
-  const lightY = useTransform(sy, (v) => 30 + v * 15);
+  const handleDecrypt = () => {
+    if (phase !== "spider") return;
+    setPhase("burst");
+    setTimeout(() => setPhase("avatar"), 2200);
+  };
 
   return (
-    <section
-      ref={ref}
-      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden"
-    >
-      {/* Cinematic atmospheric light that follows the cursor */}
-      <motion.div
+    <section className="relative h-[100svh] w-full overflow-hidden bg-[#0a0a0a]">
+      {/* Radial gradient background */}
+      <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: useTransform<number, string>(
-            [lightX, lightY],
-            ([lx, ly]) =>
-              `radial-gradient(ellipse 70% 55% at ${lx}% ${ly}%, color-mix(in oklab, var(--electric) 16%, transparent), transparent 65%), radial-gradient(ellipse 50% 40% at ${100 - lx}% ${100 - ly}%, color-mix(in oklab, var(--crimson) 14%, transparent), transparent 70%)`,
-          ),
+          background:
+            "radial-gradient(ellipse 70% 55% at 50% 45%, #0d1530 0%, #060611 55%, #020205 100%)",
         }}
       />
-
-      {/* Background parallax wrapper */}
-      <motion.div
+      {/* Vignette + flash overlays */}
+      <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{ x: bgX, y: bgY }}
-      >
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{ background: "var(--gradient-hero)" }}
-        />
-      </motion.div>
-
-      <motion.div
-        style={{ y: heroLift, opacity: heroFade }}
-        className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-8 px-6 py-32 md:py-40"
-      >
-        {/* === Unified pendulum scene === */}
-        <UnifiedSwing
-          phase={phase}
-          parallax={{ x: avatarX, y: avatarY, rx: avatarRotX, ry: avatarRotY }}
-        />
-
-        {/* Text reveal */}
-        <div className="relative z-10 grid w-full grid-cols-1 items-center gap-6 text-center md:grid-cols-[1fr_auto_1fr] md:text-left">
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 70% at 50% 50%, transparent 55%, rgba(0,0,0,0.7) 100%)",
+        }}
+      />
+      <AnimatePresence>
+        {phase === "burst" && (
           <motion.div
-            initial={{ opacity: 0, x: -40, filter: "blur(8px)" }}
-            animate={
-              phase === "done"
-                ? { opacity: 1, x: 0, filter: "blur(0px)" }
-                : { opacity: 0, x: -40 }
-            }
-            transition={{ duration: 1, ease: [0.2, 0.8, 0.2, 1] }}
-            className="space-y-2 md:text-right"
-          >
-            <p className="font-mono text-xs uppercase tracking-[0.4em] text-[var(--electric)]/80">
-              Earth-1610
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Building immersive
-              <br className="hidden md:block" /> digital experiences.
-            </p>
-          </motion.div>
+            key="flash"
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-30 bg-white"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.55, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.55, times: [0, 0.35, 1] }}
+          />
+        )}
+      </AnimatePresence>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={
-              phase === "done"
-                ? { opacity: 1, scale: 1 }
-                : { opacity: 0, scale: 0.94 }
-            }
-            transition={{ duration: 1.1, delay: 0.1, ease: [0.2, 0.8, 0.2, 1] }}
-            className="relative shrink-0"
-          >
-            <h1 className="font-display text-5xl font-bold leading-[0.95] tracking-tight md:text-7xl">
-              <span className="block text-gradient-aurora">RAJAT</span>
-              <span className="block text-gradient-aurora">TREHAN</span>
-            </h1>
-            <div className="mt-3 flex items-center gap-2 md:justify-center">
-              <span className="h-px w-8 bg-[var(--crimson)]" />
-              <p className="font-mono text-xs uppercase tracking-[0.5em] text-foreground/80">
-                Full Stack Developer
-              </p>
-              <span className="h-px w-8 bg-[var(--electric)]" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 40, filter: "blur(8px)" }}
-            animate={
-              phase === "done"
-                ? { opacity: 1, x: 0, filter: "blur(0px)" }
-                : { opacity: 0, x: 40 }
-            }
-            transition={{ duration: 1, ease: [0.2, 0.8, 0.2, 1] }}
-            className="space-y-2"
-          >
-            <p className="font-mono text-xs uppercase tracking-[0.4em] text-[var(--crimson)]/80">
-              Variant // 001
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Crafting interfaces at the
-              <br className="hidden md:block" /> intersection of code and cinema.
-            </p>
-          </motion.div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: phase === "done" ? 1 : 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/50"
+      {/* R3F Canvas */}
+      {mounted && (
+        <Canvas
+          dpr={[1, 2]}
+          gl={{
+            antialias: true,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.05,
+          }}
+          camera={{ fov: 32, position: [0, 1.2, 4.2] }}
+          className="absolute inset-0"
         >
-          ▼ traverse the web
-        </motion.div>
-      </motion.div>
+          <color attach="background" args={["#0a0a0a"]} />
+          <fog attach="fog" args={["#05060c", 6, 14]} />
+
+          <Scene phase={phase} mouse={mouse} />
+
+          <Suspense fallback={null}>
+            <Environment preset="night" />
+          </Suspense>
+        </Canvas>
+      )}
+
+      {/* UI overlay */}
+      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col">
+        {/* Boot terminal */}
+        <AnimatePresence>
+          {phase === "boot" && <BootTerminal />}
+        </AnimatePresence>
+
+        {/* CTA */}
+        <AnimatePresence>
+          {phase === "spider" && (
+            <motion.div
+              key="cta"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+              className="pointer-events-auto absolute bottom-[14svh] left-1/2 -translate-x-1/2"
+            >
+              <DecryptButton onClick={handleDecrypt} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Final typography */}
+        <AnimatePresence>
+          {phase === "avatar" && <AvatarTypography />}
+        </AnimatePresence>
+      </div>
     </section>
   );
 }
 
-/* ---------- Unified swing rig ---------- */
+/* =========================================================================
+   R3F SCENE
+   ========================================================================= */
 
-type SwingProps = {
-  phase: "swing" | "land" | "done";
-  parallax: {
-    x: MotionValue<number>;
-    y: MotionValue<number>;
-    rx: MotionValue<number>;
-    ry: MotionValue<number>;
-  };
-};
+function Scene({
+  phase,
+  mouse,
+}: {
+  phase: Phase;
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+}) {
+  const { camera } = useThree();
 
-function UnifiedSwing({ phase, parallax }: SwingProps) {
-  // Pivot anchor: starts at top-left (where the web fires from), then slides
-  // toward the top-center as the swing arcs across the viewport.
-  // Both the rope and the avatar are children of this pivot — they move as one.
-  const pivot = phase === "swing"
-    ? { left: "12%", top: "6%" }
-    : { left: "50%", top: "10%" };
+  // Camera framing per phase
+  useFrame(() => {
+    const target =
+      phase === "avatar"
+        ? new THREE.Vector3(0, 1.55, 2.0) // tighter MCU
+        : new THREE.Vector3(0, 1.15, 4.2);
+    camera.position.lerp(target, 0.04);
+    // subtle parallax
+    camera.position.x += (mouse.current.x * 0.12 - (camera.position.x - target.x)) * 0.02;
+    camera.lookAt(0, phase === "avatar" ? 1.55 : 1.15, 0);
+  });
 
   return (
-    <div className="pointer-events-none relative h-[68svh] w-full md:h-[78svh]">
-      {/* Atmospheric halo behind the avatar — shares the same scene */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: phase === "swing" ? 0.35 : 0.7, scale: 1 }}
-        transition={{ duration: 1.4, ease: [0.2, 0.8, 0.2, 1] }}
-        className="absolute left-1/2 top-1/2 -z-10 size-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl md:size-[680px]"
-        style={{ background: "var(--gradient-aurora)" }}
+    <>
+      {/* Three-point lighting */}
+      <ambientLight intensity={0.18} />
+      {/* Key */}
+      <KeyLight phase={phase} />
+      {/* Rim — neon red + blue */}
+      <pointLight
+        position={[-3, 2.2, -3]}
+        intensity={phase === "avatar" ? 4 : 6}
+        color="#ff2b5e"
+        distance={12}
       />
+      <pointLight
+        position={[3.2, 2.6, -3.2]}
+        intensity={phase === "avatar" ? 4 : 7}
+        color="#3a7bff"
+        distance={12}
+      />
+      {/* Fill */}
+      <directionalLight position={[0, 3, 5]} intensity={0.25} color="#cfe0ff" />
 
-      {/* Pivot — origin point of the energy strand */}
-      <motion.div
-        animate={pivot}
-        transition={{ duration: 2.0, ease: [0.22, 0.9, 0.28, 1] }}
-        className="absolute"
-        style={{ transformOrigin: "top center" }}
-      >
-        {/* Pendulum group — rotates around the pivot */}
-        <motion.div
-          initial={{ rotate: -55 }}
-          animate={
-            phase === "swing"
-              ? { rotate: [-55, 28, -14, 6, -2, 0] }
-              : phase === "land"
-                ? { rotate: [0, 1.5, -1, 0.6, 0] }
-                : { rotate: 0 }
-          }
-          transition={
-            phase === "swing"
-              ? { duration: 2.2, ease: [0.22, 0.9, 0.28, 1], times: [0, 0.45, 0.7, 0.85, 0.95, 1] }
-              : phase === "land"
-                ? { duration: 0.9, ease: "easeOut" }
-                : { duration: 0.6 }
-          }
-          style={{ transformOrigin: "top center" }}
-          className="relative"
-        >
-          {/* Energy strand (the "web") — anchors avatar's raised hand to pivot */}
-          <EnergyStrand phase={phase} />
+      <OrbitalRings phase={phase} mouse={mouse} />
 
-          {/* Avatar — its raised hand sits exactly where the strand ends */}
-          <motion.div
-            className="absolute left-1/2 -translate-x-1/2"
-            style={{
-              top: "var(--strand-length, 220px)",
-              x: phase === "done" ? parallax.x : 0,
-              y: phase === "done" ? parallax.y : 0,
-              rotateY: phase === "done" ? parallax.ry : 0,
-              rotateX: phase === "done" ? parallax.rx : 0,
-              transformPerspective: 1200,
-            }}
-          >
-            {/* Idle breathing + tiny landing bounce */}
-            <motion.div
-              animate={
-                phase === "done"
-                  ? { y: [0, -6, 0], scale: [1, 1.01, 1] }
-                  : phase === "land"
-                    ? { y: [0, -10, 0, -3, 0] }
-                    : { y: 0 }
-              }
-              transition={
-                phase === "done"
-                  ? { duration: 4.5, repeat: Infinity, ease: "easeInOut" }
-                  : { duration: 0.9, ease: "easeOut" }
-              }
-              className="relative"
-            >
-              <img
-                src={swingAvatar}
-                alt="Rajat Trehan — futuristic vigilante"
-                width={1024}
-                height={1536}
-                draggable={false}
-                className="h-[58svh] w-auto select-none drop-shadow-[0_40px_60px_rgba(0,0,0,0.75)] md:h-[68svh]"
-                style={{
-                  // Avatar's raised hand is roughly at top-center of the PNG,
-                  // shifted slightly right. Anchor that point to the strand.
-                  transform: "translate(-46%, 0)",
-                }}
-              />
-              {/* Subtle ground shadow that breathes with the avatar */}
-              <div
-                aria-hidden
-                className="absolute -bottom-6 left-1/2 h-6 w-48 -translate-x-1/2 rounded-[50%] opacity-50 blur-2xl"
-                style={{
-                  background:
-                    "radial-gradient(ellipse, oklch(0 0 0 / 0.7), transparent 70%)",
-                }}
-              />
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-
-      {/* Impact ring — fired the instant the swing settles */}
-      {phase !== "swing" && (
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0.8 }}
-          animate={{ scale: 2.6, opacity: 0 }}
-          transition={{ duration: 1.4, ease: "easeOut" }}
-          className="absolute left-1/2 top-1/2 size-72 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--electric)]"
-          style={{ boxShadow: "var(--shadow-glow-blue)" }}
-        />
-      )}
-    </div>
+      <Suspense fallback={null}>
+        {(phase === "spider" || phase === "burst" || phase === "boot") && (
+          <SpiderModel phase={phase} mouse={mouse} />
+        )}
+        {phase === "burst" && <DisintegrationBurst />}
+        {phase === "avatar" && <AvatarModel mouse={mouse} />}
+      </Suspense>
+    </>
   );
 }
 
-/* ---------- Energy strand (the web line that holds the avatar) ---------- */
-
-function EnergyStrand({ phase }: { phase: "swing" | "land" | "done" }) {
-  // Strand length matches `--strand-length` consumed by the avatar offset.
-  const length = 220;
+function KeyLight({ phase }: { phase: Phase }) {
+  const ref = useRef<THREE.SpotLight>(null);
+  useFrame(() => {
+    if (!ref.current) return;
+    const target =
+      phase === "avatar" ? 1.6 : phase === "burst" ? 3.5 : 0.55;
+    ref.current.intensity += (target - ref.current.intensity) * 0.08;
+  });
   return (
-    <div
-      className="relative left-1/2 -translate-x-1/2"
-      style={{ width: 4, height: length, ["--strand-length" as never]: `${length}px` }}
+    <spotLight
+      ref={ref}
+      position={[1.5, 3.5, 4]}
+      angle={0.55}
+      penumbra={0.8}
+      intensity={0.55}
+      color="#eaf2ff"
+      castShadow={false}
+    />
+  );
+}
+
+/* ---------------- Orbital rings ---------------- */
+
+function OrbitalRings({
+  phase,
+  mouse,
+}: {
+  phase: Phase;
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+}) {
+  const group = useRef<THREE.Group>(null);
+  useFrame((_, dt) => {
+    if (!group.current) return;
+    group.current.rotation.y += dt * 0.04;
+    group.current.rotation.x = THREE.MathUtils.lerp(
+      group.current.rotation.x,
+      mouse.current.y * 0.12,
+      0.04,
+    );
+    const targetScale = phase === "burst" ? 1.25 : 1;
+    group.current.scale.lerp(
+      new THREE.Vector3(targetScale, targetScale, targetScale),
+      0.06,
+    );
+  });
+
+  const rings = [1.8, 2.4, 3.1, 4.0];
+
+  return (
+    <group ref={group} position={[0, 1.4, -3]}>
+      {rings.map((r, i) => (
+        <mesh key={i} rotation={[Math.PI / 2 + i * 0.12, i * 0.4, 0]}>
+          <torusGeometry args={[r, 0.006, 16, 160]} />
+          <meshBasicMaterial
+            color={i % 2 ? "#3a7bff" : "#ff2b5e"}
+            transparent
+            opacity={0.18 + i * 0.04}
+          />
+        </mesh>
+      ))}
+      {/* dotted halo */}
+      {Array.from({ length: 80 }).map((_, i) => {
+        const a = (i / 80) * Math.PI * 2;
+        return (
+          <mesh key={`d${i}`} position={[Math.cos(a) * 3.5, Math.sin(a) * 3.5, 0]}>
+            <sphereGeometry args={[0.012, 6, 6]} />
+            <meshBasicMaterial color="#7aa9ff" transparent opacity={0.35} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+/* ---------------- Spider-Man ---------------- */
+
+function SpiderModel({
+  phase,
+  mouse,
+}: {
+  phase: Phase;
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+}) {
+  const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
+  const group = useRef<THREE.Group>(null);
+  const { actions, mixer } = useAnimations(animations, group);
+  const visibleRef = useRef(true);
+  const headBone = useRef<THREE.Object3D | null>(null);
+  const spineBone = useRef<THREE.Object3D | null>(null);
+
+  // Find head + spine bones for parallax
+  useLayoutEffect(() => {
+    scene.traverse((o) => {
+      const n = o.name.toLowerCase();
+      if (!headBone.current && n.includes("head")) headBone.current = o;
+      if (!spineBone.current && (n.includes("spine2") || n.includes("spine_02") || n.includes("chest"))) {
+        spineBone.current = o;
+      }
+    });
+    // Make all materials respond to lighting nicely
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        m.castShadow = false;
+        m.receiveShadow = false;
+        const mat = m.material as THREE.MeshStandardMaterial;
+        if (mat && "envMapIntensity" in mat) mat.envMapIntensity = 0.6;
+      }
+    });
+  }, [scene]);
+
+  // Play idle, switch to personality on burst
+  useEffect(() => {
+    const idle = actions[SPIDER_IDLE];
+    const personality = actions[SPIDER_PERSONALITY];
+    if (phase === "spider" || phase === "boot") {
+      idle?.reset().fadeIn(0.4).play();
+      personality?.stop();
+    } else if (phase === "burst") {
+      if (personality && idle) {
+        personality.reset().play();
+        personality.crossFadeFrom(idle, 0.35, false);
+      } else {
+        personality?.reset().fadeIn(0.3).play();
+      }
+    }
+    return () => {
+      idle?.fadeOut(0.3);
+      personality?.fadeOut(0.3);
+    };
+  }, [phase, actions]);
+
+  // Hide model after burst dissolves
+  useFrame(() => {
+    if (!group.current) return;
+    if (phase === "burst") {
+      // dissolve via scale + opacity ramp ~ last 0.7s of burst window
+      const t = Math.min(1, (performance.now() % 1e9) / 1e9);
+      // we time visually with explicit fade below
+    }
+    // Mouse parallax — head + spine
+    if (headBone.current) {
+      headBone.current.rotation.y = THREE.MathUtils.lerp(
+        headBone.current.rotation.y,
+        mouse.current.x * 0.35,
+        0.08,
+      );
+      headBone.current.rotation.x = THREE.MathUtils.lerp(
+        headBone.current.rotation.x,
+        -mouse.current.y * 0.25,
+        0.08,
+      );
+    }
+    if (spineBone.current) {
+      spineBone.current.rotation.y = THREE.MathUtils.lerp(
+        spineBone.current.rotation.y,
+        mouse.current.x * 0.12,
+        0.06,
+      );
+    }
+  });
+
+  // Fade out at end of burst
+  const fadeRef = useRef(1);
+  useFrame((_, dt) => {
+    if (phase === "burst") {
+      fadeRef.current = Math.max(0, fadeRef.current - dt * 1.4);
+    } else if (phase === "spider" || phase === "boot") {
+      fadeRef.current = Math.min(1, fadeRef.current + dt * 2);
+    }
+    scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        const mat = m.material as THREE.MeshStandardMaterial;
+        if (mat) {
+          mat.transparent = true;
+          mat.opacity = fadeRef.current;
+          mat.depthWrite = fadeRef.current > 0.5;
+        }
+      }
+    });
+    if (phase === "avatar") visibleRef.current = false;
+  });
+
+  if (!visibleRef.current && phase === "avatar") return null;
+
+  return (
+    <group ref={group} position={[0, 0, 0]}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+/* ---------------- Avatar (MCU) ---------------- */
+
+function AvatarModel({
+  mouse,
+}: {
+  mouse: React.MutableRefObject<{ x: number; y: number }>;
+}) {
+  const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
+  const group = useRef<THREE.Group>(null);
+  const { actions, mixer } = useAnimations(animations, group);
+  const headBone = useRef<THREE.Object3D | null>(null);
+  const spineBone = useRef<THREE.Object3D | null>(null);
+
+  useLayoutEffect(() => {
+    scene.traverse((o) => {
+      const n = o.name.toLowerCase();
+      if (!headBone.current && n.includes("head")) headBone.current = o;
+      if (!spineBone.current && (n.includes("spine2") || n.includes("chest"))) {
+        spineBone.current = o;
+      }
+    });
+  }, [scene]);
+
+  // Seamless breathing crossfade loop
+  useEffect(() => {
+    const breath = actions[AVATAR_BREATH] || Object.values(actions)[0];
+    if (!breath) return;
+    breath.reset().fadeIn(0.6).play();
+    breath.setLoop(THREE.LoopRepeat, Infinity);
+    breath.clampWhenFinished = false;
+
+    // Cross-fade trick — at end of each loop, briefly fade weight up/down
+    const dur = breath.getClip().duration;
+    let last = 0;
+    const onTime = () => {
+      const t = breath.time % dur;
+      // when nearing the end, blend the weight toward 0 then back to 1
+      const tailWindow = Math.min(0.35, dur * 0.15);
+      if (t > dur - tailWindow) {
+        const k = (t - (dur - tailWindow)) / tailWindow;
+        // ease out
+        breath.setEffectiveWeight(1 - k * 0.35);
+      } else if (t < 0.35 && last > dur - 0.5) {
+        // first frames — fade weight back in
+        const k = Math.min(1, t / 0.25);
+        breath.setEffectiveWeight(0.65 + k * 0.35);
+      } else {
+        breath.setEffectiveWeight(1);
+      }
+      last = t;
+    };
+    const unsub = mixer.addEventListener("loop", onTime);
+    const id = setInterval(onTime, 16);
+    return () => {
+      clearInterval(id);
+      mixer.removeEventListener("loop", onTime as never);
+      breath.fadeOut(0.4);
+    };
+  }, [actions, mixer]);
+
+  // Parallax + entry
+  const enterRef = useRef(0);
+  useFrame((_, dt) => {
+    enterRef.current = Math.min(1, enterRef.current + dt * 1.6);
+    if (group.current) {
+      const s = THREE.MathUtils.lerp(0.92, 1, enterRef.current);
+      group.current.scale.setScalar(s);
+    }
+    if (headBone.current) {
+      headBone.current.rotation.y = THREE.MathUtils.lerp(
+        headBone.current.rotation.y,
+        mouse.current.x * 0.28,
+        0.08,
+      );
+      headBone.current.rotation.x = THREE.MathUtils.lerp(
+        headBone.current.rotation.x,
+        -mouse.current.y * 0.18,
+        0.08,
+      );
+    }
+    if (spineBone.current) {
+      spineBone.current.rotation.y = THREE.MathUtils.lerp(
+        spineBone.current.rotation.y,
+        mouse.current.x * 0.08,
+        0.06,
+      );
+    }
+  });
+
+  return (
+    <group ref={group} position={[0, 0, 0]}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+/* ---------------- Disintegration burst ---------------- */
+
+function DisintegrationBurst() {
+  const count = 1200;
+  const ref = useRef<THREE.Points>(null);
+  const startRef = useRef<number>(performance.now());
+
+  const { positions, velocities } = useMemo(() => {
+    const positions = new Float32Array(count * 3);
+    const velocities = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      // Spread roughly along Spider-Man's volume
+      positions[i * 3 + 0] = (Math.random() - 0.5) * 0.7;
+      positions[i * 3 + 1] = 0.4 + Math.random() * 1.8;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+      velocities[i * 3 + 0] = (Math.random() - 0.5) * 1.6;
+      velocities[i * 3 + 1] = (Math.random() - 0.2) * 1.4;
+      velocities[i * 3 + 2] = -1.2 - Math.random() * 2.2; // blow backwards
+    }
+    return { positions, velocities };
+  }, []);
+
+  useFrame(() => {
+    if (!ref.current) return;
+    const geom = ref.current.geometry as THREE.BufferGeometry;
+    const posAttr = geom.attributes.position as THREE.BufferAttribute;
+    const t = (performance.now() - startRef.current) / 1000;
+    for (let i = 0; i < count; i++) {
+      posAttr.array[i * 3 + 0] = positions[i * 3 + 0] + velocities[i * 3 + 0] * t * 0.6;
+      posAttr.array[i * 3 + 1] = positions[i * 3 + 1] + velocities[i * 3 + 1] * t * 0.6 - 0.4 * t * t;
+      posAttr.array[i * 3 + 2] = positions[i * 3 + 2] + velocities[i * 3 + 2] * t * 0.6;
+    }
+    posAttr.needsUpdate = true;
+    const mat = ref.current.material as THREE.PointsMaterial;
+    mat.opacity = Math.max(0, 1 - t / 1.8);
+  });
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+          args={[positions, 3]}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.035}
+        color="#5fb6ff"
+        transparent
+        opacity={1}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+}
+
+/* =========================================================================
+   UI OVERLAYS
+   ========================================================================= */
+
+function BootTerminal() {
+  const lines = [
+    "> EARTH-1610 // BOOT SEQUENCE",
+    "> DECRYPTING VARIANT_001 ...",
+    "> NEURAL HANDSHAKE: OK",
+    "> RENDERING IDENTITY ...",
+  ];
+  return (
+    <motion.div
+      key="boot"
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      className="absolute left-6 top-6 font-mono text-[11px] uppercase tracking-[0.3em] text-[#7aa9ff] md:left-10 md:top-10"
     >
-      {/* Core glowing line */}
-      <motion.div
-        initial={{ scaleY: 0, opacity: 0 }}
-        animate={{
-          scaleY: 1,
-          opacity: phase === "done" ? 0.55 : 0.95,
-        }}
-        transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-        style={{
-          transformOrigin: "top center",
-          background:
-            "linear-gradient(to bottom, oklch(0.99 0.02 240) 0%, var(--electric) 30%, color-mix(in oklab, var(--electric) 40%, transparent) 100%)",
-          boxShadow:
-            "0 0 8px var(--electric), 0 0 18px color-mix(in oklab, var(--electric) 60%, transparent)",
-          filter: "blur(0.4px)",
-        }}
-        className="absolute inset-0 mx-auto w-[2px] rounded-full"
+      {lines.map((l, i) => (
+        <motion.div
+          key={l}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.18, delay: i * 0.18, ease: "easeOut" }}
+          className="leading-relaxed"
+        >
+          {l}
+        </motion.div>
+      ))}
+    </motion.div>
+  );
+}
+
+function DecryptButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      data-cursor="hover"
+      className="group relative cursor-none overflow-hidden border border-[#5fb6ff]/40 bg-[#0a0a0a]/60 px-7 py-3 font-mono text-[11px] uppercase tracking-[0.4em] text-[#cfe2ff] backdrop-blur-md transition hover:border-[#5fb6ff] hover:text-white"
+      style={{
+        boxShadow:
+          "0 0 24px rgba(95,182,255,0.25), inset 0 0 14px rgba(95,182,255,0.12)",
+      }}
+    >
+      <span className="relative z-10">[ Initialize Decryption ]</span>
+      <span
+        aria-hidden
+        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[#5fb6ff]/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
       />
-      {/* Subtle outer aura */}
+    </button>
+  );
+}
+
+function AvatarTypography() {
+  return (
+    <motion.div
+      key="avatar-ui"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+      className="absolute inset-0 flex items-center justify-between px-6 md:px-20"
+    >
+      <div className="max-w-[42%]">
+        <div className="font-mono text-[10px] uppercase tracking-[0.4em] text-[#7aa9ff]/80">
+          Identity // 001
+        </div>
+        <h1 className="mt-3 font-display text-4xl font-bold leading-[0.95] tracking-tight text-white md:text-6xl">
+          <ScrambleText text="RAJAT" />
+          <br />
+          <ScrambleText text="TREHAN" delay={0.25} />
+        </h1>
+      </div>
+      <div className="max-w-[42%] text-right">
+        <MaskedSlide text="FULL STACK" />
+        <MaskedSlide text="DEVELOPER" delay={0.18} />
+        <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.4em] text-[#ff2b5e]/80">
+          Variant // 001
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---------------- Cipher / scramble text ---------------- */
+
+const CIPHER = "!<>-_\\/[]{}—=+*^?#________ABCDEF0123456789";
+function ScrambleText({ text, delay = 0 }: { text: string; delay?: number }) {
+  const [display, setDisplay] = useState("");
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now() + delay * 1000;
+    const duration = 800;
+    const tick = (now: number) => {
+      const t = Math.max(0, Math.min(1, (now - start) / duration));
+      let out = "";
+      for (let i = 0; i < text.length; i++) {
+        const reveal = t * text.length;
+        if (i < Math.floor(reveal)) {
+          out += text[i];
+        } else if (text[i] === " ") {
+          out += " ";
+        } else {
+          out += CIPHER[Math.floor(Math.random() * CIPHER.length)];
+        }
+      }
+      setDisplay(out);
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else setDisplay(text);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [text, delay]);
+  return <span className="font-mono">{display || text.replace(/./g, "•")}</span>;
+}
+
+function MaskedSlide({ text, delay = 0 }: { text: string; delay?: number }) {
+  return (
+    <div className="relative overflow-hidden">
       <motion.div
-        initial={{ scaleY: 0, opacity: 0 }}
-        animate={{ scaleY: 1, opacity: phase === "done" ? 0.25 : 0.5 }}
-        transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
-        style={{
-          transformOrigin: "top center",
-          background:
-            "linear-gradient(to bottom, color-mix(in oklab, var(--electric) 50%, transparent), transparent)",
-          filter: "blur(3px)",
-        }}
-        className="absolute inset-0 mx-auto w-[10px] rounded-full"
-      />
+        initial={{ y: "110%" }}
+        animate={{ y: "0%" }}
+        transition={{ duration: 0.85, delay, ease: [0.7, 0, 0.2, 1] }}
+        className="font-display text-3xl font-bold uppercase tracking-tight text-white md:text-5xl"
+      >
+        {text}
+      </motion.div>
     </div>
   );
 }
