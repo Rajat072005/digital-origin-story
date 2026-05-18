@@ -1,4 +1,4 @@
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import { useGLTF, useAnimations, Environment } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import {
@@ -14,6 +14,7 @@ useGLTF.preload("/models/spiderman_optimized.glb");
 useGLTF.preload("/models/avatar_mcu.glb");
 
 type Phase = "boot" | "spider" | "burst" | "avatar";
+type ModelGroupProps = ThreeElements["group"];
 
 export function Hero() {
   const [phase, setPhase] = useState<Phase>("boot");
