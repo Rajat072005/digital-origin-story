@@ -162,7 +162,7 @@ function Scene({
   return (
     <>
       {/* Three-point lighting */}
-      <ambientLight intensity={0.18} />
+      <ambientLight intensity={0.85} />
       {/* Key */}
       <KeyLight phase={phase} />
       {/* Rim — neon red + blue */}
@@ -179,7 +179,7 @@ function Scene({
         distance={12}
       />
       {/* Fill */}
-      <directionalLight position={[0, 3, 5]} intensity={0.25} color="#cfe0ff" />
+      <directionalLight position={[0, 3, 5]} intensity={0.6} color="#cfe0ff" />
 
       <OrbitalRings phase={phase} mouse={mouse} />
 
