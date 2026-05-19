@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment } from "@react-three/drei";
+import { useGLTF, useAnimations, Environment, Center } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import { Leva, useControls } from "leva";
 import {
@@ -272,13 +272,15 @@ function OrbitalRings({
 /* ---------------- Spider-Man ---------------- */
 
 function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
-  const group = useRef<THREE.Group>(null);
+  // Pass 'scene' directly to useAnimations to guarantee it finds the bones
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
-  const { actions } = useAnimations(animations, group);
+  const { actions } = useAnimations(animations, scene);
+
+  // Keep the sliders just for fine-tuning, but default to normal bounds
   const { scale, positionX, positionY, positionZ } = useControls("Spider-Man", {
-    scale: { value: 1, min: 0.001, max: 3, step: 0.001 },
+    scale: { value: 2.2, min: 0.1, max: 10, step: 0.1 },
     positionX: { value: 0, min: -5, max: 5, step: 0.01 },
-    positionY: { value: -1, min: -5, max: 5, step: 0.01 },
+    positionY: { value: -1.2, min: -5, max: 5, step: 0.01 },
     positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
   });
 
@@ -296,8 +298,11 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
   }, [actions, isCrackingNeck]);
 
   return (
-    <group ref={group} {...props} dispose={null}>
-      <primitive object={scene} scale={scale} position={[positionX, positionY, positionZ]} />
+    <group {...props} dispose={null}>
+      {/* <Center> calculates the mesh bounds and forces it into view */}
+      <Center position={[positionX, positionY, positionZ]} scale={scale}>
+        <primitive object={scene} />
+      </Center>
     </group>
   );
 }
