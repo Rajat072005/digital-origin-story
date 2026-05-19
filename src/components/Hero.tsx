@@ -275,6 +275,8 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const { actions } = useAnimations(animations, scene);
   const normalizedRoot = useMemo(() => new THREE.Group(), []);
+  const [skeletonRoots, setSkeletonRoots] = useState<THREE.Object3D[]>([]);
+  const [meshRefs, setMeshRefs] = useState<THREE.Mesh[]>([]);
 
   const { scale, positionX, positionY, positionZ } = useControls("Spider-Man", {
     scale: { value: 2.25, min: 0.1, max: 10, step: 0.1 },
@@ -286,72 +288,152 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
   useMemo(() => {
     let meshCount = 0;
     let skinnedMeshCount = 0;
-    const originalParent = scene.parent;
+    let boneCount = 0;
+    let geometryCount = 0;
+    const meshes: THREE.Mesh[] = [];
+    const skeletonOwners: THREE.Object3D[] = [];
 
     scene.position.set(0, 0, 0);
     scene.rotation.set(0, 0, 0);
     scene.scale.set(1, 1, 1);
     scene.updateMatrixWorld(true);
+
+    // Force every ancestor visible + clean NaN/zero transforms
     scene.traverse((object) => {
-      const mesh = object as THREE.Mesh & { isMesh?: boolean; isSkinnedMesh?: boolean };
-      if (!mesh.isMesh) return;
+      let p: THREE.Object3D | null = object;
+      while (p) {
+        p.visible = true;
+        const pos = p.position;
+        const scl = p.scale;
+        if (pos && (Number.isNaN(pos.x) || Number.isNaN(pos.y) || Number.isNaN(pos.z))) {
+          console.warn("SM NaN position on:", p.name);
+          pos.set(0, 0, 0);
+        }
+        if (scl && (Number.isNaN(scl.x) || Number.isNaN(scl.y) || Number.isNaN(scl.z))) {
+          console.warn("SM NaN scale on:", p.name);
+          scl.set(1, 1, 1);
+        }
+        if (scl && scl.x === 0 && scl.y === 0 && scl.z === 0) {
+          console.warn("SM zero scale on:", p.name, "→ reset to 1");
+          scl.set(1, 1, 1);
+        }
+        p = p.parent;
+      }
+    });
 
-      meshCount += 1;
-      if (mesh.isSkinnedMesh) skinnedMeshCount += 1;
-      mesh.visible = true;
-      mesh.frustumCulled = false;
+    scene.traverse((object) => {
+      const anyObj = object as THREE.Object3D & {
+        isMesh?: boolean;
+        isSkinnedMesh?: boolean;
+        isBone?: boolean;
+        isGroup?: boolean;
+        geometry?: THREE.BufferGeometry;
+        material?: THREE.Material | THREE.Material[];
+        skeleton?: THREE.Skeleton;
+      };
 
-      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      materials.forEach((material) => {
-        if (!material) return;
-        material.side = THREE.DoubleSide;
-        material.transparent = false;
-        material.opacity = 1;
-        material.needsUpdate = true;
+      const kind = anyObj.isSkinnedMesh
+        ? "SkinnedMesh"
+        : anyObj.isMesh
+          ? "Mesh"
+          : anyObj.isBone
+            ? "Bone"
+            : anyObj.isGroup
+              ? "Group"
+              : object.type;
+
+      console.log("SM Node:", {
+        name: object.name || "(unnamed)",
+        type: kind,
+        visible: object.visible,
+        position: object.position.toArray(),
+        scale: object.scale.toArray(),
+        hasGeometry: Boolean(anyObj.geometry),
+        hasMaterial: Boolean(anyObj.material),
+        parent: object.parent?.name || "(none)",
       });
 
-      console.log("Spider-Man Mesh Debug:", {
-        name: mesh.name || "(unnamed mesh)",
-        visible: mesh.visible,
-        position: mesh.position.toArray(),
-        scale: mesh.scale.toArray(),
-        isSkinnedMesh: Boolean(mesh.isSkinnedMesh),
-      });
+      if (anyObj.isBone) boneCount += 1;
+
+      if (anyObj.isMesh) {
+        meshCount += 1;
+        if (anyObj.isSkinnedMesh) skinnedMeshCount += 1;
+        const mesh = object as THREE.Mesh;
+        mesh.visible = true;
+        mesh.frustumCulled = false;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+
+        // FORCE REPLACE materials with MeshNormalMaterial (diagnostic)
+        const normalMat = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map(() => normalMat);
+        } else {
+          mesh.material = normalMat;
+        }
+
+        const geo = mesh.geometry;
+        if (geo) {
+          geometryCount += 1;
+          const posAttr = geo.getAttribute("position");
+          const vertexCount = posAttr ? posAttr.count : 0;
+
+          if (!geo.boundingBox || Number.isNaN(geo.boundingBox.min.x)) {
+            geo.computeBoundingBox();
+          }
+          if (!geo.boundingSphere || Number.isNaN(geo.boundingSphere.radius)) {
+            geo.computeBoundingSphere();
+          }
+
+          console.log("SM Geometry:", {
+            mesh: mesh.name,
+            vertexCount,
+            boundingBox: geo.boundingBox
+              ? [...geo.boundingBox.min.toArray(), ...geo.boundingBox.max.toArray()]
+              : null,
+            boundingSphere: geo.boundingSphere
+              ? { center: geo.boundingSphere.center.toArray(), radius: geo.boundingSphere.radius }
+              : null,
+          });
+        }
+
+        meshes.push(mesh);
+
+        if (anyObj.isSkinnedMesh && anyObj.skeleton?.bones?.[0]) {
+          const rootBone = anyObj.skeleton.bones[0];
+          if (!skeletonOwners.includes(rootBone)) skeletonOwners.push(rootBone);
+        }
+      }
     });
 
     const rawBox = new THREE.Box3().setFromObject(scene);
     const rawCenter = rawBox.getCenter(new THREE.Vector3());
     const rawSize = rawBox.getSize(new THREE.Vector3());
     const rawMaxDimension = Math.max(rawSize.x, rawSize.y, rawSize.z);
-    const safeMaxDimension = Number.isFinite(rawMaxDimension) && rawMaxDimension > 0 ? rawMaxDimension : 1;
-    const autoScale = 2 / safeMaxDimension;
+    const safeMax = Number.isFinite(rawMaxDimension) && rawMaxDimension > 0 ? rawMaxDimension : 1;
+    const autoScale = 2 / safeMax;
 
     normalizedRoot.clear();
     normalizedRoot.add(scene);
     scene.scale.setScalar(autoScale);
     scene.position.set(-rawCenter.x * autoScale, -rawCenter.y * autoScale, -rawCenter.z * autoScale);
-    scene.rotation.set(0, 0, 0);
     scene.updateMatrixWorld(true);
 
-    const normalizedBox = new THREE.Box3().setFromObject(normalizedRoot);
-    const normalizedCenter = normalizedBox.getCenter(new THREE.Vector3());
-    const normalizedSize = normalizedBox.getSize(new THREE.Vector3());
+    const normBox = new THREE.Box3().setFromObject(normalizedRoot);
 
-    console.log("Spider-Man Animation Names:", animations.map((clip) => clip.name));
-    console.log("Spider-Man Action Names:", Object.keys(actions));
-    console.log("Spider-Man Bounding Box Debug:", {
+    console.log("SM TOTALS:", { meshCount, skinnedMeshCount, boneCount, geometryCount });
+    console.log("SM Animations:", animations.map((c) => c.name));
+    console.log("SM Actions:", Object.keys(actions));
+    console.log("SM Bounds:", {
       rawSize: rawSize.toArray(),
       rawCenter: rawCenter.toArray(),
-      rawMaxDimension,
       autoScale,
-      normalizedSize: normalizedSize.toArray(),
-      normalizedCenter: normalizedCenter.toArray(),
-      meshCount,
-      skinnedMeshCount,
-      originalParent: originalParent?.name || "none",
+      normalizedSize: normBox.getSize(new THREE.Vector3()).toArray(),
     });
 
-  }, [animations, normalizedRoot, scene]);
+    setMeshRefs(meshes);
+    setSkeletonRoots(skeletonOwners);
+  }, [animations, normalizedRoot, scene, actions]);
 
   useEffect(() => {
     const idleAnim = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
@@ -376,6 +458,12 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
       <gridHelper args={[6, 12, "#3a7bff", "#444444"]} position={[0, -1.05, 0]} />
       <Center position={[positionX, positionY, positionZ]} scale={scale}>
         <primitive object={normalizedRoot} />
+        {meshRefs.map((m, i) => (
+          <primitive key={`bh-${i}`} object={new THREE.BoxHelper(m, 0xffff00)} />
+        ))}
+        {skeletonRoots.map((b, i) => (
+          <primitive key={`sk-${i}`} object={new THREE.SkeletonHelper(b)} />
+        ))}
       </Center>
       <OrbitControls makeDefault enablePan enableZoom enableRotate target={[0, 0.8, 0]} />
     </group>
