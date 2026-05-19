@@ -288,6 +288,9 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
     let skinnedMeshCount = 0;
     const originalParent = scene.parent;
 
+    scene.position.set(0, 0, 0);
+    scene.rotation.set(0, 0, 0);
+    scene.scale.set(1, 1, 1);
     scene.updateMatrixWorld(true);
     scene.traverse((object) => {
       const mesh = object as THREE.Mesh & { isMesh?: boolean; isSkinnedMesh?: boolean };
@@ -335,6 +338,7 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
     const normalizedSize = normalizedBox.getSize(new THREE.Vector3());
 
     console.log("Spider-Man Animation Names:", animations.map((clip) => clip.name));
+    console.log("Spider-Man Action Names:", Object.keys(actions));
     console.log("Spider-Man Bounding Box Debug:", {
       rawSize: rawSize.toArray(),
       rawCenter: rawCenter.toArray(),
