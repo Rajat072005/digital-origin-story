@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment, Center } from "@react-three/drei";
+import { useGLTF, useAnimations, Environment, Center, OrbitControls } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import { Leva, useControls } from "leva";
 import {
@@ -272,17 +272,86 @@ function OrbitalRings({
 /* ---------------- Spider-Man ---------------- */
 
 function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
-  // Pass 'scene' directly to useAnimations to guarantee it finds the bones
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const { actions } = useAnimations(animations, scene);
+  const normalizedRoot = useMemo(() => new THREE.Group(), []);
 
-  // Keep the sliders just for fine-tuning, but default to normal bounds
   const { scale, positionX, positionY, positionZ } = useControls("Spider-Man", {
-    scale: { value: 2.2, min: 0.1, max: 10, step: 0.1 },
+    scale: { value: 2.25, min: 0.1, max: 10, step: 0.1 },
     positionX: { value: 0, min: -5, max: 5, step: 0.01 },
-    positionY: { value: -1.2, min: -5, max: 5, step: 0.01 },
+    positionY: { value: 0.25, min: -5, max: 5, step: 0.01 },
     positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
   });
+
+  useMemo(() => {
+    let meshCount = 0;
+    let skinnedMeshCount = 0;
+    const originalParent = scene.parent;
+
+    scene.position.set(0, 0, 0);
+    scene.rotation.set(0, 0, 0);
+    scene.scale.set(1, 1, 1);
+    scene.updateMatrixWorld(true);
+    scene.traverse((object) => {
+      const mesh = object as THREE.Mesh & { isMesh?: boolean; isSkinnedMesh?: boolean };
+      if (!mesh.isMesh) return;
+
+      meshCount += 1;
+      if (mesh.isSkinnedMesh) skinnedMeshCount += 1;
+      mesh.visible = true;
+      mesh.frustumCulled = false;
+
+      const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      materials.forEach((material) => {
+        if (!material) return;
+        material.side = THREE.DoubleSide;
+        material.transparent = false;
+        material.opacity = 1;
+        material.needsUpdate = true;
+      });
+
+      console.log("Spider-Man Mesh Debug:", {
+        name: mesh.name || "(unnamed mesh)",
+        visible: mesh.visible,
+        position: mesh.position.toArray(),
+        scale: mesh.scale.toArray(),
+        isSkinnedMesh: Boolean(mesh.isSkinnedMesh),
+      });
+    });
+
+    const rawBox = new THREE.Box3().setFromObject(scene);
+    const rawCenter = rawBox.getCenter(new THREE.Vector3());
+    const rawSize = rawBox.getSize(new THREE.Vector3());
+    const rawMaxDimension = Math.max(rawSize.x, rawSize.y, rawSize.z);
+    const safeMaxDimension = Number.isFinite(rawMaxDimension) && rawMaxDimension > 0 ? rawMaxDimension : 1;
+    const autoScale = 2 / safeMaxDimension;
+
+    normalizedRoot.clear();
+    normalizedRoot.add(scene);
+    scene.scale.setScalar(autoScale);
+    scene.position.set(-rawCenter.x * autoScale, -rawCenter.y * autoScale, -rawCenter.z * autoScale);
+    scene.rotation.set(0, 0, 0);
+    scene.updateMatrixWorld(true);
+
+    const normalizedBox = new THREE.Box3().setFromObject(normalizedRoot);
+    const normalizedCenter = normalizedBox.getCenter(new THREE.Vector3());
+    const normalizedSize = normalizedBox.getSize(new THREE.Vector3());
+
+    console.log("Spider-Man Animation Names:", animations.map((clip) => clip.name));
+    console.log("Spider-Man Action Names:", Object.keys(actions));
+    console.log("Spider-Man Bounding Box Debug:", {
+      rawSize: rawSize.toArray(),
+      rawCenter: rawCenter.toArray(),
+      rawMaxDimension,
+      autoScale,
+      normalizedSize: normalizedSize.toArray(),
+      normalizedCenter: normalizedCenter.toArray(),
+      meshCount,
+      skinnedMeshCount,
+      originalParent: originalParent?.name || "none",
+    });
+
+  }, [animations, normalizedRoot, scene]);
 
   useEffect(() => {
     const idleAnim = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
@@ -299,10 +368,16 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
 
   return (
     <group {...props} dispose={null}>
-      {/* <Center> calculates the mesh bounds and forces it into view */}
+      <mesh position={[0, 1.2, 0]}>
+        <boxGeometry args={[0.25, 0.25, 0.25]} />
+        <meshBasicMaterial color="#ff2b5e" wireframe />
+      </mesh>
+      <axesHelper args={[2.5]} />
+      <gridHelper args={[6, 12, "#3a7bff", "#444444"]} position={[0, -1.05, 0]} />
       <Center position={[positionX, positionY, positionZ]} scale={scale}>
-        <primitive object={scene} />
+        <primitive object={normalizedRoot} />
       </Center>
+      <OrbitControls makeDefault enablePan enableZoom enableRotate target={[0, 0.8, 0]} />
     </group>
   );
 }
