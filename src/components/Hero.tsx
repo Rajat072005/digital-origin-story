@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment, Center } from "@react-three/drei";
+import { useGLTF, useAnimations, Environment, Center, OrbitControls } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import { Leva, useControls } from "leva";
 import {
