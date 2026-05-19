@@ -283,7 +283,7 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
     positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
   });
 
-  const normalizedStats = useMemo(() => {
+  useMemo(() => {
     let meshCount = 0;
     let skinnedMeshCount = 0;
     const originalParent = scene.parent;
@@ -325,8 +325,8 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
 
     normalizedRoot.clear();
     normalizedRoot.add(scene);
-    scene.position.sub(rawCenter);
     scene.scale.setScalar(autoScale);
+    scene.position.set(-rawCenter.x * autoScale, -rawCenter.y * autoScale, -rawCenter.z * autoScale);
     scene.rotation.set(0, 0, 0);
     scene.updateMatrixWorld(true);
 
@@ -347,7 +347,6 @@ function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
       originalParent: originalParent?.name || "none",
     });
 
-    return { meshCount, skinnedMeshCount, rawSize, rawCenter, rawMaxDimension, autoScale };
   }, [animations, normalizedRoot, scene]);
 
   useEffect(() => {
