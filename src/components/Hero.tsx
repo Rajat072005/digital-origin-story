@@ -1,6 +1,7 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import { useGLTF, useAnimations, Environment } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
+import { SpiderCrawlButton } from "./SpiderCrawl";
 import {
   Suspense,
   useEffect,
@@ -129,6 +130,16 @@ export function Hero() {
           {phase === "avatar" && <AvatarTypography />}
         </AnimatePresence>
       </div>
+      {/* Floating side nav */}
+      <nav className="pointer-events-auto absolute right-6 top-1/2 -translate-y-1/2 z-20 hidden md:flex flex-col gap-4">
+        {[{id:"#skills",label:"Skills"},{id:"#projects",label:"Projects"},{id:"#contact",label:"Contact"}].map((item)=>(
+          <a key={item.id} href={item.id} data-cursor="hover"
+            className="group flex items-center gap-2 cursor-none">
+            <span className="font-mono text-[8px] uppercase tracking-widest text-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200">{item.label}</span>
+            <span className="size-1.5 rounded-full bg-[#5fb6ff]/40 border border-[#5fb6ff]/30 animate-nav-pulse group-hover:bg-[#5fb6ff] transition-colors duration-200"/>
+          </a>
+        ))}
+      </nav>
     </section>
   );
 }
@@ -415,7 +426,7 @@ function BootTerminal() {
 
 function DecryptButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
+    <SpiderCrawlButton
       onClick={onClick}
       data-cursor="hover"
       className="group relative cursor-none overflow-hidden border border-[#5fb6ff]/40 bg-[#0a0a0a]/60 px-7 py-3 font-mono text-[11px] uppercase tracking-[0.4em] text-[#cfe2ff] backdrop-blur-md transition hover:border-[#5fb6ff] hover:text-white"
@@ -429,7 +440,7 @@ function DecryptButton({ onClick }: { onClick: () => void }) {
         aria-hidden
         className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[#5fb6ff]/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
       />
-    </button>
+    </SpiderCrawlButton>
   );
 }
 

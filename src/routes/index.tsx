@@ -5,13 +5,15 @@ import { CustomCursor } from "@/components/CustomCursor";
 import { IntroLoader } from "@/components/IntroLoader";
 import { Hero } from "@/components/Hero";
 import { OriginStory } from "@/components/OriginStory";
-import { NeuralInterface } from "@/components/NeuralInterface";
+import { SpiderSenseRadar } from "@/components/SpiderSenseRadar";
 import { Projects } from "@/components/Projects";
+import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
-import { SectionDivider } from "@/components/SectionDivider";
+import { SectionDivider, WebPullSection } from "@/components/SectionDivider";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { ScrollProgress } from "@/components/ScrollProgress";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(({
   component: Index,
   head: () => ({
     meta: [
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-});
+} as any));
 
 function Index() {
   const [booted, setBooted] = useState(false);
@@ -38,18 +40,34 @@ function Index() {
       <CityBackground />
       <CustomCursor />
       <SmoothScroll />
+      <ScrollProgress />
 
       {!booted && <IntroLoader onDone={() => setBooted(true)} />}
 
       {booted && (
         <>
           <Hero />
+
           <SectionDivider />
-          <OriginStory />
+          <WebPullSection>
+            <OriginStory />
+          </WebPullSection>
+
           <SectionDivider />
-          <NeuralInterface />
+          <WebPullSection>
+            <SpiderSenseRadar />
+          </WebPullSection>
+
           <SectionDivider />
-          <Projects />
+          <WebPullSection>
+            <Projects />
+          </WebPullSection>
+
+          <SectionDivider />
+          <WebPullSection>
+            <Contact />
+          </WebPullSection>
+
           <Footer />
         </>
       )}
