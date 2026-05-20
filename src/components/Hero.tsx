@@ -1,7 +1,6 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment, Center, OrbitControls } from "@react-three/drei";
+import { useGLTF, useAnimations, Environment } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
-import { Leva, useControls } from "leva";
 import {
   Suspense,
   useEffect,
@@ -80,7 +79,6 @@ export function Hero() {
       {/* R3F Canvas */}
       {mounted && (
         <>
-        <Leva collapsed />
         <Canvas
           dpr={[1, 2]}
           gl={{
@@ -119,7 +117,7 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-              className="pointer-events-auto absolute bottom-[14svh] left-1/2 -translate-x-1/2"
+              className="pointer-events-auto absolute bottom-[5svh] left-1/2 -translate-x-1/2"
             >
               <DecryptButton onClick={handleDecrypt} />
             </motion.div>
@@ -152,12 +150,12 @@ function Scene({
   useFrame(() => {
     const target =
       phase === "avatar"
-        ? new THREE.Vector3(0, 1.55, 2.0) // tighter MCU
+        ? new THREE.Vector3(0, 1.15, 3.8) // pulled back to show full avatar standing
         : new THREE.Vector3(0, 1.15, 4.2);
     camera.position.lerp(target, 0.04);
     // subtle parallax
     camera.position.x += (mouse.current.x * 0.12 - (camera.position.x - target.x)) * 0.02;
-    camera.lookAt(0, phase === "avatar" ? 1.55 : 1.15, 0);
+    camera.lookAt(0, phase === "avatar" ? 1.1 : 1.15, 0);
   });
 
   return (
@@ -271,201 +269,29 @@ function OrbitalRings({
 
 /* ---------------- Spider-Man ---------------- */
 
-function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
+export function SpiderManModel({ isCrackingNeck, ...props }: SpiderManModelProps) {
+  // Pass 'scene' directly to useAnimations so it binds perfectly to the mesh
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const { actions } = useAnimations(animations, scene);
-  const normalizedRoot = useMemo(() => new THREE.Group(), []);
-  const [skeletonRoots, setSkeletonRoots] = useState<THREE.Object3D[]>([]);
-  const [meshRefs, setMeshRefs] = useState<THREE.Mesh[]>([]);
-
-  const { scale, positionX, positionY, positionZ } = useControls("Spider-Man", {
-    scale: { value: 2.25, min: 0.1, max: 10, step: 0.1 },
-    positionX: { value: 0, min: -5, max: 5, step: 0.01 },
-    positionY: { value: 0.25, min: -5, max: 5, step: 0.01 },
-    positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
-  });
-
-  useMemo(() => {
-    let meshCount = 0;
-    let skinnedMeshCount = 0;
-    let boneCount = 0;
-    let geometryCount = 0;
-    const meshes: THREE.Mesh[] = [];
-    const skeletonOwners: THREE.Object3D[] = [];
-
-    scene.position.set(0, 0, 0);
-    scene.rotation.set(0, 0, 0);
-    scene.scale.set(1, 1, 1);
-    scene.updateMatrixWorld(true);
-
-    // Force every ancestor visible + clean NaN/zero transforms
-    scene.traverse((object) => {
-      let p: THREE.Object3D | null = object;
-      while (p) {
-        p.visible = true;
-        const pos = p.position;
-        const scl = p.scale;
-        if (pos && (Number.isNaN(pos.x) || Number.isNaN(pos.y) || Number.isNaN(pos.z))) {
-          console.warn("SM NaN position on:", p.name);
-          pos.set(0, 0, 0);
-        }
-        if (scl && (Number.isNaN(scl.x) || Number.isNaN(scl.y) || Number.isNaN(scl.z))) {
-          console.warn("SM NaN scale on:", p.name);
-          scl.set(1, 1, 1);
-        }
-        if (scl && scl.x === 0 && scl.y === 0 && scl.z === 0) {
-          console.warn("SM zero scale on:", p.name, "→ reset to 1");
-          scl.set(1, 1, 1);
-        }
-        p = p.parent;
-      }
-    });
-
-    scene.traverse((object) => {
-      const anyObj = object as THREE.Object3D & {
-        isMesh?: boolean;
-        isSkinnedMesh?: boolean;
-        isBone?: boolean;
-        isGroup?: boolean;
-        geometry?: THREE.BufferGeometry;
-        material?: THREE.Material | THREE.Material[];
-        skeleton?: THREE.Skeleton;
-      };
-
-      const kind = anyObj.isSkinnedMesh
-        ? "SkinnedMesh"
-        : anyObj.isMesh
-          ? "Mesh"
-          : anyObj.isBone
-            ? "Bone"
-            : anyObj.isGroup
-              ? "Group"
-              : object.type;
-
-      console.log("SM Node:", {
-        name: object.name || "(unnamed)",
-        type: kind,
-        visible: object.visible,
-        position: object.position.toArray(),
-        scale: object.scale.toArray(),
-        hasGeometry: Boolean(anyObj.geometry),
-        hasMaterial: Boolean(anyObj.material),
-        parent: object.parent?.name || "(none)",
-      });
-
-      if (anyObj.isBone) boneCount += 1;
-
-      if (anyObj.isMesh) {
-        meshCount += 1;
-        if (anyObj.isSkinnedMesh) skinnedMeshCount += 1;
-        const mesh = object as THREE.Mesh;
-        mesh.visible = true;
-        mesh.frustumCulled = false;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-
-        // FORCE REPLACE materials with MeshNormalMaterial (diagnostic)
-        const normalMat = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide });
-        if (Array.isArray(mesh.material)) {
-          mesh.material = mesh.material.map(() => normalMat);
-        } else {
-          mesh.material = normalMat;
-        }
-
-        const geo = mesh.geometry;
-        if (geo) {
-          geometryCount += 1;
-          const posAttr = geo.getAttribute("position");
-          const vertexCount = posAttr ? posAttr.count : 0;
-
-          if (!geo.boundingBox || Number.isNaN(geo.boundingBox.min.x)) {
-            geo.computeBoundingBox();
-          }
-          if (!geo.boundingSphere || Number.isNaN(geo.boundingSphere.radius)) {
-            geo.computeBoundingSphere();
-          }
-
-          console.log("SM Geometry:", {
-            mesh: mesh.name,
-            vertexCount,
-            boundingBox: geo.boundingBox
-              ? [...geo.boundingBox.min.toArray(), ...geo.boundingBox.max.toArray()]
-              : null,
-            boundingSphere: geo.boundingSphere
-              ? { center: geo.boundingSphere.center.toArray(), radius: geo.boundingSphere.radius }
-              : null,
-          });
-        }
-
-        meshes.push(mesh);
-
-        if (anyObj.isSkinnedMesh && anyObj.skeleton?.bones?.[0]) {
-          const rootBone = anyObj.skeleton.bones[0];
-          if (!skeletonOwners.includes(rootBone)) skeletonOwners.push(rootBone);
-        }
-      }
-    });
-
-    const rawBox = new THREE.Box3().setFromObject(scene);
-    const rawCenter = rawBox.getCenter(new THREE.Vector3());
-    const rawSize = rawBox.getSize(new THREE.Vector3());
-    const rawMaxDimension = Math.max(rawSize.x, rawSize.y, rawSize.z);
-    const safeMax = Number.isFinite(rawMaxDimension) && rawMaxDimension > 0 ? rawMaxDimension : 1;
-    const autoScale = 2 / safeMax;
-
-    normalizedRoot.clear();
-    normalizedRoot.add(scene);
-    scene.scale.setScalar(autoScale);
-    scene.position.set(-rawCenter.x * autoScale, -rawCenter.y * autoScale, -rawCenter.z * autoScale);
-    scene.updateMatrixWorld(true);
-
-    const normBox = new THREE.Box3().setFromObject(normalizedRoot);
-
-    console.log("SM TOTALS:", { meshCount, skinnedMeshCount, boneCount, geometryCount });
-    console.log("SM Animations:", animations.map((c) => c.name));
-    console.log("SM Actions:", Object.keys(actions));
-    console.log("SM Bounds:", {
-      rawSize: rawSize.toArray(),
-      rawCenter: rawCenter.toArray(),
-      autoScale,
-      normalizedSize: normBox.getSize(new THREE.Vector3()).toArray(),
-    });
-
-    setMeshRefs(meshes);
-    setSkeletonRoots(skeletonOwners);
-  }, [animations, normalizedRoot, scene, actions]);
 
   useEffect(() => {
     const idleAnim = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
     const crackAnim = "SK_1036_1036001_Lobby|Lobby_Half_Personality";
 
     if (isCrackingNeck && actions[crackAnim]) {
+      // Transition to the neck crack action on button click
       actions[idleAnim]?.fadeOut(0.2);
       actions[crackAnim].reset().fadeIn(0.2).setLoop(THREE.LoopOnce, 1).play();
       actions[crackAnim].clampWhenFinished = true;
     } else if (actions[idleAnim]) {
+      // Default breathing idle
       actions[idleAnim].reset().fadeIn(0.2).play();
     }
   }, [actions, isCrackingNeck]);
 
   return (
     <group {...props} dispose={null}>
-      <mesh position={[0, 1.2, 0]}>
-        <boxGeometry args={[0.25, 0.25, 0.25]} />
-        <meshBasicMaterial color="#ff2b5e" wireframe />
-      </mesh>
-      <axesHelper args={[2.5]} />
-      <gridHelper args={[6, 12, "#3a7bff", "#444444"]} position={[0, -1.05, 0]} />
-      <Center position={[positionX, positionY, positionZ]} scale={scale}>
-        <primitive object={normalizedRoot} />
-        {meshRefs.map((m, i) => (
-          <primitive key={`bh-${i}`} object={new THREE.BoxHelper(m, 0xffff00)} />
-        ))}
-        {skeletonRoots.map((b, i) => (
-          <primitive key={`sk-${i}`} object={new THREE.SkeletonHelper(b)} />
-        ))}
-      </Center>
-      <OrbitControls makeDefault enablePan enableZoom enableRotate target={[0, 0.8, 0]} />
+      <primitive object={scene} scale={1.2} position={[0, 0.1, 0]} />
     </group>
   );
 }
@@ -476,24 +302,20 @@ function AvatarModel(props: ModelGroupProps) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF("/models/avatar_mcu.glb");
   const { actions } = useAnimations(animations, group);
-  const { scale, positionX, positionY, positionZ } = useControls("Avatar", {
-    scale: { value: 1, min: 0.001, max: 3, step: 0.001 },
-    positionX: { value: 0, min: -5, max: 5, step: 0.01 },
-    positionY: { value: -1, min: -5, max: 5, step: 0.01 },
-    positionZ: { value: 0, min: -5, max: 5, step: 0.01 },
-  });
 
   useEffect(() => {
     const breatheAnim = "mixamo.com.001";
     if (actions[breatheAnim]) {
-      // Crossfade loop to prevent snapping
-      actions[breatheAnim].reset().fadeIn(0.5).play();
+      const action = actions[breatheAnim];
+      action.reset().fadeIn(0.5).play();
+      // Skip past frame-0 slump — advance to mid-cycle where the model stands tall
+      action.time = 0.8;
     }
   }, [actions]);
 
   return (
     <group ref={group} {...props} dispose={null}>
-      <primitive object={scene} scale={scale} position={[positionX, positionY, positionZ]} />
+      <primitive object={scene} scale={1} position={[0, 0.12, 0.07]} />
     </group>
   );
 }
