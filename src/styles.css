@@ -338,3 +338,53 @@
 .animate-pulse-ring { animation: pulse-ring 2.4s ease-out infinite; }
 .animate-lightning { animation: lightning 9s ease-in-out infinite; }
 .animate-scan { animation: scan 4s linear infinite; }
+
+/* Spider-Sense danger pulse */
+@keyframes spider-sense-pulse {
+  0%   { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.animate-spider-sense {
+  animation: spider-sense-pulse 1.4s ease-out infinite;
+}
+
+/* Web-pull spring entrance */
+@keyframes web-pull-in {
+  0%   { transform: translateY(38px); opacity: 0; }
+  55%  { transform: translateY(-6px); }
+  75%  { transform: translateY(3px); }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+.animate-web-pull { animation: web-pull-in 0.85s cubic-bezier(0.2,0.9,0.3,1) both; }
+
+/* Comic action-word burst */
+@keyframes comic-burst {
+  0%   { transform: scale(0) rotate(-12deg); opacity: 0; }
+  55%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+.animate-comic-burst { animation: comic-burst 0.45s cubic-bezier(0.2,1.4,0.3,1) both; }
+
+/* Radar sweep fade */
+@keyframes radar-fade {
+  0%   { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* Floating nav dot pulse */
+@keyframes nav-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(95,182,255,0.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(95,182,255,0); }
+}
+.animate-nav-pulse { animation: nav-pulse 2s ease-out infinite; }
+
+/* CRT flicker */
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  92%       { opacity: 1; }
+  93%       { opacity: 0.82; }
+  94%       { opacity: 1; }
+  97%       { opacity: 0.92; }
+  98%       { opacity: 1; }
+}
+.animate-crt { animation: crt-flicker 8s ease-in-out infinite; }

@@ -1,5 +1,13 @@
 import { motion } from "motion/react";
+import { SpiderCrawlButton } from "./SpiderCrawl";
 import rooftop from "@/assets/rooftop.jpg";
+
+const LINKS: { label: string; href: string }[] = [
+  { label: "github",   href: "https://github.com/Rajat072005" },
+  { label: "linkedin", href: "https://linkedin.com/in/rajat-trehan" },
+  { label: "twitter",  href: "https://twitter.com" },
+  { label: "email",    href: "mailto:rajattrehan7@gmail.com" },
+];
 
 export function Footer() {
   return (
@@ -51,16 +59,16 @@ export function Footer() {
           transition={{ duration: 1, delay: 0.3 }}
           className="mt-8 flex flex-wrap items-center justify-center gap-3"
         >
-          {["github", "linkedin", "twitter", "email"].map((label) => (
-            <a
+          {LINKS.map(({ label, href }) => (
+            <SpiderCrawlButton
               key={label}
-              href="#"
+              as="div"
+              onClick={() => window.open(href, "_blank")}
               data-cursor="hover"
-              className="group relative rounded-full border border-foreground/15 bg-background/40 px-5 py-2 font-mono text-[11px] uppercase tracking-[0.35em] text-foreground/80 backdrop-blur transition-all duration-300 hover:border-[var(--electric)] hover:text-foreground"
+              className="rounded-full border border-foreground/15 bg-background/40 px-5 py-2 font-mono text-[11px] uppercase tracking-[0.35em] text-foreground/80 backdrop-blur transition-all duration-300 hover:border-[var(--electric)] hover:text-foreground cursor-none"
             >
-              <span className="relative z-10">{label}</span>
-              <span className="pointer-events-none absolute inset-0 rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 glow-blue" />
-            </a>
+              {label}
+            </SpiderCrawlButton>
           ))}
         </motion.div>
 
