@@ -72,26 +72,31 @@ function ProjectedSkill({ skill, align, delay, offset }: { skill: Skill; align: 
     >
       {/* Text Data */}
       <div className={`flex flex-col ${isLeft ? "items-end text-right" : "items-start text-left"}`}>
-        <div className="font-mono text-[8px] uppercase tracking-[0.3em] text-white/50 mb-0.5">
+        <div className="font-mono text-[8px] uppercase tracking-[0.3em] text-white/40 mb-0.5 transition-all duration-300 group-hover:text-white group-hover:tracking-[0.5em]">
           SYS.{skill.cat}
         </div>
 
-        <div className="font-display text-xl sm:text-2xl font-bold uppercase tracking-widest text-white transition-all group-hover:scale-105"
+        <div className="relative font-display text-xl sm:text-2xl font-bold uppercase tracking-widest text-white transition-all duration-300 group-hover:scale-[1.02] group-hover:tracking-[0.25em]"
           style={{ textShadow: `2px 0 0 ${SPIDER_MAGENTA}80, -2px 0 0 ${SPIDER_CYAN}80, 0 0 15px ${skill.color}` }}>
+          
+          {/* Target Brackets that snap outward on hover */}
+          <span className={`absolute top-1/2 -translate-y-1/2 transition-all duration-300 opacity-0 group-hover:opacity-100 text-[#ff007f] text-sm font-light ${isLeft ? '-left-2 group-hover:-left-5' : '-left-2 group-hover:-left-5'}`}>[</span>
           {skill.name}
+          <span className={`absolute top-1/2 -translate-y-1/2 transition-all duration-300 opacity-0 group-hover:opacity-100 text-[#00f0ff] text-sm font-light ${isLeft ? '-right-2 group-hover:-right-5' : '-right-2 group-hover:-right-5'}`}>]</span>
         </div>
 
-        <div className="font-mono text-[10px] text-white/70 mt-1 uppercase tracking-[0.2em]">
-          {skill.desc} <span style={{ color: skill.color }}>[{skill.level}%]</span>
+        <div className="font-mono text-[10px] text-white/60 mt-1 uppercase tracking-[0.2em] transition-colors duration-300 group-hover:text-white">
+          {skill.desc} <span className="inline-block transition-transform duration-300 group-hover:scale-110 group-hover:font-bold" style={{ color: skill.color }}>[{skill.level}%]</span>
         </div>
 
-        {/* Curved Progress Arc (Simulated with skewed lines) */}
+        {/* Curved Progress Arc (Simulated with skewed lines) - Sequential Hover Effect */}
         <div className={`mt-2 flex gap-1 w-[120px] sm:w-[160px] ${isLeft ? 'justify-end' : 'justify-start'}`}>
           {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="h-1 flex-1 skew-x-[-20deg]"
+            <div key={i} className="h-1 flex-1 skew-x-[-20deg] transition-all duration-300 group-hover:scale-y-[2] group-hover:-translate-y-0.5"
               style={{
                 background: i < (skill.level / 100 * 12) ? skill.color : 'rgba(255,255,255,0.1)',
-                boxShadow: i < (skill.level / 100 * 12) ? `0 0 8px ${skill.color}` : 'none'
+                boxShadow: i < (skill.level / 100 * 12) ? `0 0 8px ${skill.color}` : 'none',
+                transitionDelay: `${isLeft ? (11 - i) * 15 : i * 15}ms`
               }} />
           ))}
         </div>
@@ -99,9 +104,23 @@ function ProjectedSkill({ skill, align, delay, offset }: { skill: Skill; align: 
 
       {/* Hexagon Node attached to the imaginary curve */}
       <div className="relative flex items-center justify-center">
-        {/* Connecting faint line */}
-        <div className={`absolute top-1/2 ${isLeft ? 'right-[-40px]' : 'left-[-40px]'} w-[40px] h-px bg-white/10`} />
-        <motion.div animate={{ rotate: isLeft ? 360 : -360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
+        
+        {/* Connecting faint line (Base state) */}
+        <div className={`absolute top-1/2 ${isLeft ? 'right-[-40px]' : 'left-[-40px]'} w-[40px] h-px bg-white/10 transition-opacity duration-300 group-hover:opacity-0`} />
+        
+        {/* Connecting bright tether (Hover state) */}
+        <div className={`absolute top-1/2 ${isLeft ? 'right-[-40px]' : 'left-[-40px]'} w-[40px] h-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300`} 
+             style={{ backgroundColor: skill.color, boxShadow: `0 0 10px ${skill.color}` }} />
+
+        {/* Sonar Ping Ring */}
+        <div className="absolute inset-0 rounded-full border-2 opacity-0 group-hover:animate-ping pointer-events-none" 
+             style={{ borderColor: skill.color }} />
+
+        <motion.div 
+          animate={{ rotate: isLeft ? 360 : -360 }} 
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="transition-transform duration-500 group-hover:scale-125"
+        >
           <HexagonIcon color={skill.color} />
         </motion.div>
       </div>
@@ -213,8 +232,8 @@ export function TacticalArsenal() {
   const leftSkills = currentSkills.slice(0, 3);
   const rightSkills = currentSkills.slice(3, 6);
 
-  // Sharp diagonal cascade offset for a highly tactical HUD look
-  const curveOffsets = [60, 30, 0];
+  // Set offsets to 0 for a perfectly straight, symmetrical HUD list
+  const curveOffsets = [0, 0, 0];
 
   return (
     <section id="skills" className="relative min-h-screen py-24 flex flex-col justify-center overflow-hidden">
@@ -277,23 +296,8 @@ export function TacticalArsenal() {
             </AnimatePresence>
           </div>
 
-          {/* Center Projection Rings & Light Beams */}
+          {/* Center Projection Rings */}
           <div className="hidden lg:flex justify-center items-center relative">
-             
-             {/* VOLUMETRIC LIGHT BEAMS PROJECTING OUTWARD */}
-             {/* Left-shooting Cyan Beam */}
-             <motion.div 
-                initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ duration: 1, delay: 0.2 }}
-                className="absolute top-1/2 right-[50%] w-[400px] h-[300px] bg-gradient-to-l from-[#00f0ff]/20 to-transparent blur-2xl pointer-events-none" 
-                style={{ transform: "translateY(-50%)", transformOrigin: "right center", clipPath: "polygon(0 0, 100% 45%, 100% 55%, 0 100%)" }} 
-             />
-             
-             {/* Right-shooting Magenta Beam */}
-             <motion.div 
-                initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ duration: 1, delay: 0.2 }}
-                className="absolute top-1/2 left-[50%] w-[400px] h-[300px] bg-gradient-to-r from-[#ff007f]/20 to-transparent blur-2xl pointer-events-none" 
-                style={{ transform: "translateY(-50%)", transformOrigin: "left center", clipPath: "polygon(0 45%, 100% 0, 100% 100%, 0 55%)" }} 
-             />
 
             <motion.div
               animate={rebooting ? { scale: 0.8, opacity: 0, rotate: 90, filter: "blur(10px)" } : { scale: 1, opacity: 1, rotate: 0, filter: "blur(0px)" }}
