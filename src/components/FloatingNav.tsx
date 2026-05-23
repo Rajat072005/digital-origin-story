@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 const NAV_ITEMS = [
-  { id: "#about",   label: "About",    icon: "◆" },
-  { id: "#skills",  label: "Skills",   icon: "◎" },
-  { id: "#projects",label: "Projects", icon: "◈" },
-  { id: "#contact", label: "Contact",  icon: "◉" },
+  { id: "#about", label: "About", icon: "◆" },
+  { id: "#skills", label: "Skills", icon: "◎" },
+  { id: "#projects", label: "Projects", icon: "◈" },
+  { id: "#contact", label: "Contact", icon: "◉" },
 ];
 
 /**
@@ -54,7 +54,7 @@ export function FloatingNav() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-          className="pointer-events-auto fixed right-6 top-1/2 -translate-y-1/2 z-40 hidden md:flex flex-col items-end gap-4"
+          className="pointer-events-auto fixed right-6 top-1/2 -translate-y-1/2 z-[100] hidden md:flex flex-col items-end gap-4"
         >
           {/* back-to-top */}
           <button
@@ -68,7 +68,7 @@ export function FloatingNav() {
             </span>
             <span className="size-3 rounded-full border border-[#5fb6ff]/40 flex items-center justify-center group-hover:border-[#5fb6ff] transition-colors duration-200">
               <svg width="6" height="6" viewBox="0 0 6 6">
-                <path d="M3 5 L3 1 M1 3 L3 1 L5 3" stroke="#5fb6ff" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+                <path d="M3 5 L3 1 M1 3 L3 1 L5 3" stroke="#5fb6ff" strokeWidth="0.8" fill="none" strokeLinecap="round" />
               </svg>
             </span>
           </button>

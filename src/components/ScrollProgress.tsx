@@ -34,7 +34,7 @@ export function ScrollProgress() {
 
   return (
     <div
-      className="pointer-events-none fixed right-8 top-0 bottom-0 z-50 hidden md:flex flex-col items-center"
+      className="pointer-events-none fixed right-8 top-0 bottom-0 z-[100] hidden md:flex flex-col items-center"
       aria-hidden
     >
       {/* progress track (empty web) */}

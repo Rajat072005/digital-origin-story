@@ -27,7 +27,7 @@ export function Footer() {
   };
 
   return (
-    <footer id="contact" className="relative isolate overflow-hidden pt-20">
+    <footer id="contact" className="relative isolate overflow-hidden pt-20 z-50 bg-background">
       {/* Background layer */}
       <div
         className="absolute inset-0 -z-20 bg-cover bg-center opacity-80"
@@ -40,11 +40,7 @@ export function Footer() {
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-12 px-6 pb-12 pt-16 md:pb-20">
         
         {/* Terminal Form integrated into Footer */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.9, ease: [0.2, 0.8, 0.2, 1] }}
+        <div
           className="w-full relative overflow-hidden rounded-2xl border border-[#ff2b5e]/20 bg-background/50 backdrop-blur-xl p-8 md:p-12 shadow-[0_0_60px_rgba(255,43,94,0.08),inset_0_0_0_1px_rgba(255,43,94,0.06)]"
         >
           <div className="pointer-events-none absolute inset-0 scanlines opacity-20" />
@@ -117,16 +113,10 @@ export function Footer() {
               <p className="text-sm text-foreground/60">With great power comes great response time.</p>
             </motion.div>
           )}
-        </motion.div>
+        </div>
 
         {/* Social Links */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex flex-wrap items-center justify-center gap-4 mt-6"
-        >
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
           {LINKS.map(({ label, href }) => (
             <SpiderCrawlButton
               key={label}
@@ -139,7 +129,7 @@ export function Footer() {
               {label}
             </SpiderCrawlButton>
           ))}
-        </motion.div>
+        </div>
 
         {/* Bottom Metadata */}
         <div className="mt-8 flex w-full items-center justify-between font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/30 border-t border-foreground/5 pt-6">

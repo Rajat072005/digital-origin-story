@@ -1,201 +1,221 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { SpiderCrawlButton } from "./SpiderCrawl";
 
 const PROJECTS = [
   {
     name: "EatInSync",
-    tag: "Food Intelligence Ecosystem",
+    tag: "Food Intelligence",
     body: "An AI-powered dining companion that scans menus, learns your taste, and recommends the next bite worth remembering.",
     issue: "01",
-    action: "WHOOSH!",
-    palette: "from-amber-600/30 via-[#ff2b5e]/20 to-transparent",
+    action: "THWIP!",
     accent: "#ff2b5e",
+    palette: "from-[#ff2b5e]/30 via-black/80 to-black",
     github: "https://github.com/Rajat072005",
     live: "#",
     tech: ["React", "Node.js", "MongoDB", "AI/ML"],
+    universe: "EARTH-1610 // MILES",
+    rotation: -1,
   },
   {
     name: "Moodify",
-    tag: "Music Emotion Universe",
+    tag: "Audio Universe",
     body: "Visualize how a track feels — emotional gradients, audio-reactive UI, and a soundscape you can step inside.",
     issue: "02",
-    action: "ZAP!",
-    palette: "from-[#a78bfa]/25 via-[#5fb6ff]/15 to-transparent",
+    action: "GLITCH!",
     accent: "#a78bfa",
+    palette: "from-[#a78bfa]/30 via-black/80 to-black",
     github: "https://github.com/Rajat072005",
     live: "#",
     tech: ["React", "Spotify API", "GSAP", "Canvas"],
+    universe: "EARTH-65 // GWEN",
+    rotation: 1,
   },
   {
     name: "Paste App",
-    tag: "Encrypted Developer Terminal",
+    tag: "Encrypted Terminal",
     body: "A secure, terminal-inspired space to share code & secrets with end-to-end encryption and zero clutter.",
     issue: "03",
-    action: "POW!",
-    palette: "from-[#5fb6ff]/25 via-cyan-500/10 to-transparent",
+    action: "SHOCK!",
     accent: "#5fb6ff",
+    palette: "from-[#5fb6ff]/30 via-black/80 to-black",
     github: "https://github.com/Rajat072005",
     live: "#",
     tech: ["Next.js", "PostgreSQL", "Prisma", "Encryption"],
+    universe: "EARTH-928 // MIGUEL",
+    rotation: -1.5,
   },
 ];
 
+const ProjectCard = ({ project, index }: { project: any; index: number }) => {
+  return (
+    <div 
+      className="sticky flex items-center justify-center w-full"
+      style={{ 
+        top: `calc(15vh + ${index * 20}px)`, 
+        marginBottom: index === PROJECTS.length - 1 ? "15vh" : "45vh",
+        zIndex: index * 10
+      }}
+    >
+      <div 
+        className="relative w-full max-w-6xl rounded-[2rem] border-[3px] bg-black/70 backdrop-blur-2xl overflow-visible shadow-2xl flex flex-col md:flex-row origin-center group transition-colors duration-500"
+        style={{ 
+            borderColor: `${project.accent}40`, 
+            boxShadow: `0 20px 60px -10px ${project.accent}30, inset 0 0 40px ${project.accent}10`,
+            rotate: project.rotation
+        }}
+      >
+        {/* Dynamic Border Glow on Hover */}
+        <div className="absolute inset-0 rounded-[2rem] border-[3px] border-transparent group-hover:border-current opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none z-50" style={{ color: project.accent, boxShadow: `0 0 30px ${project.accent}40` }} />
+
+        {/* Comic Panel Action Word (POW! THWIP!) bursting out of the frame */}
+        <div 
+           className="absolute -top-16 -right-8 md:-right-16 z-[100] font-display font-black text-6xl md:text-8xl italic uppercase pointer-events-none transition-all duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] opacity-0 scale-50 -rotate-12 translate-y-10 group-hover:opacity-100 group-hover:scale-[1.15] group-hover:-rotate-3 group-hover:translate-y-0"
+           style={{ 
+             color: "transparent",
+             WebkitTextStroke: `2px ${project.accent}`,
+             filter: `drop-shadow(4px 4px 0px ${project.accent})`
+           }}
+        >
+           {project.action}
+        </div>
+
+        {/* ISSUE Badge - Comic Style overlapping top-left */}
+        <div 
+          className="absolute -top-8 -left-8 z-40 flex h-24 w-24 items-center justify-center rounded-full border-4 shadow-xl -rotate-12 group-hover:rotate-0 transition-transform duration-500 bg-black"
+          style={{
+            borderColor: project.accent,
+            boxShadow: `0 0 20px ${project.accent}66, inset 0 0 10px ${project.accent}66`,
+          }}
+        >
+          <div className="text-center leading-none text-white font-black">
+            <div className="text-xs tracking-widest opacity-80 mb-1">ISSUE</div>
+            <div className="text-3xl" style={{ color: project.accent }}>#{project.issue}</div>
+          </div>
+        </div>
+
+        {/* Glowing Halftone Background inside card */}
+        <div className={`absolute inset-0 rounded-[2rem] bg-gradient-to-br ${project.palette} pointer-events-none`} />
+        <div className="absolute inset-0 rounded-[2rem] halftone opacity-40 mix-blend-overlay pointer-events-none" />
+
+        {/* --- Content Area --- */}
+        <div className="relative z-10 p-10 md:p-14 w-full flex flex-col md:flex-row gap-12">
+          
+          {/* Left Column: Info */}
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="mb-6 inline-flex items-center gap-3">
+              <span className="font-mono text-sm tracking-[0.3em] font-bold uppercase" style={{ color: project.accent, textShadow: `0 0 10px ${project.accent}88` }}>
+                {project.universe}
+              </span>
+            </div>
+
+            <h3 className="font-display text-5xl md:text-7xl font-black text-white uppercase tracking-tight mb-6 leading-none">
+              {project.name}
+            </h3>
+            
+            <p className="text-lg md:text-xl text-white/70 leading-relaxed mb-8 max-w-lg">
+              {project.body}
+            </p>
+
+            <div className="flex flex-wrap gap-3 mb-10">
+              {project.tech.map((t: string) => (
+                <span key={t} className="font-mono text-xs tracking-widest text-white/80 uppercase px-4 py-2 border-2 rounded-none bg-black/50" style={{ borderColor: `${project.accent}40` }}>
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 mt-auto">
+               <SpiderCrawlButton
+                 as="a"
+                 href={project.github}
+                 target="_blank"
+                 className="px-8 py-4 rounded-none border-[3px] font-mono text-sm uppercase tracking-[0.2em] text-white bg-black hover:bg-white/5 transition-colors relative overflow-hidden group/btn cursor-none"
+                 style={{ borderColor: project.accent }}
+               >
+                 <span className="relative z-10">[ SOURCE_CODE ]</span>
+               </SpiderCrawlButton>
+
+               <a
+                 href={project.live}
+                 target="_blank"
+                 className="px-8 py-4 rounded-none font-mono text-sm uppercase tracking-[0.2em] text-black font-black transition-all hover:-translate-y-1 hover:translate-x-1 relative"
+                 style={{ 
+                    backgroundColor: project.accent, 
+                    boxShadow: `-6px 6px 0px 0px rgba(255,255,255,0.2)` 
+                 }}
+               >
+                 INITIATE_LINK //
+               </a>
+            </div>
+          </div>
+
+          {/* Right Column: Visual Graphic */}
+          <div className="hidden md:flex flex-1 relative min-h-[400px] border-[3px] bg-black/40 overflow-hidden items-center justify-center transition-colors duration-500 rounded-2xl" style={{ borderColor: `${project.accent}30` }}>
+             {/* Abstract Collider Rings */}
+             <motion.div 
+               animate={{ rotate: 360 }}
+               transition={{ duration: 40, ease: "linear", repeat: Infinity }}
+               className="absolute w-[120%] aspect-square rounded-full border-[3px] border-dashed opacity-30"
+               style={{ borderColor: project.accent }}
+             />
+             <motion.div 
+               animate={{ rotate: -360 }}
+               transition={{ duration: 25, ease: "linear", repeat: Infinity }}
+               className="absolute w-[80%] aspect-square rounded-full border-[3px] opacity-20"
+               style={{ borderColor: project.accent }}
+             />
+             
+             {/* Huge background number */}
+             <div className="absolute inset-0 flex items-center justify-center font-display font-black text-[250px] opacity-10 select-none pointer-events-none" style={{ color: project.accent }}>
+                {project.issue}
+             </div>
+
+             {/* Spider-Sense Radar / Glitch Overlay appearing on hover */}
+             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-md">
+                <span className="font-mono text-2xl tracking-[0.5em] font-black" style={{ color: project.accent, textShadow: `3px 0 red, -3px 0 cyan` }}>
+                   ACCESSING_DIMENSION
+                </span>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function Projects() {
   return (
-    <section id="projects" className="relative px-6 py-32 md:py-44">
-      <div className="mx-auto max-w-7xl">
+    <section id="projects" className="relative w-full pt-32 pb-48">
+      {/* Removed bg-background to allow CityBackground/Web to show through */}
+      <div className="mx-auto max-w-7xl px-6 mb-32 relative z-20">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: "-20%" }}
           transition={{ duration: 0.8 }}
-          className="mb-16 flex flex-col items-center gap-3 text-center"
+          className="flex flex-col items-start gap-4 border-l-4 pl-6 border-[#ff2b5e]"
         >
-          <span className="font-mono text-xs uppercase tracking-[0.5em] text-[#a78bfa]">
-            // multiverse_log
+          <span className="font-mono text-xs uppercase tracking-[0.5em] text-white/70 flex items-center gap-3">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff2b5e] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff2b5e]"></span>
+            </span>
+            Multiverse_Archives //
           </span>
-          <h2 className="font-display text-4xl font-bold tracking-tight text-gradient md:text-6xl">
-            Each project, a different universe.
+          <h2 className="font-display text-5xl font-black tracking-tight text-white md:text-7xl uppercase leading-[0.9]">
+            Dimensional <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/60 to-white/20">
+              Rifts
+            </span>
           </h2>
         </motion.div>
+      </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
-          {PROJECTS.map((p, i) => (
-            <motion.article
-              key={p.name}
-              initial={{ opacity: 0, y: 60, rotate: i % 2 ? 1.5 : -1.5 }}
-              whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-              viewport={{ once: true, margin: "-15%" }}
-              transition={{ duration: 0.9, delay: i * 0.1, ease: [0.2, 0.8, 0.2, 1] }}
-              whileHover={{ y: -8, rotate: 0.4 }}
-              data-cursor="hover"
-              className="group relative isolate overflow-hidden rounded-2xl border border-foreground/10 bg-card backdrop-blur-md"
-              style={{
-                boxShadow: "var(--shadow-panel)",
-                // Comic book panel border
-                outline: "2px solid transparent",
-                outlineOffset: "3px",
-              }}
-            >
-              {/* gradient wash */}
-              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${p.palette}`} />
-              <div className="halftone pointer-events-none absolute inset-0 opacity-35 mix-blend-overlay" />
-
-              {/* glowing edge on hover */}
-              <div
-                className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                style={{ boxShadow: `inset 0 0 0 1.5px ${p.accent}, 0 0 50px -10px ${p.accent}` }}
-              />
-
-              {/* ISSUE badge — comic book style */}
-              <div
-                className="absolute -right-2 -top-2 z-10 flex h-14 w-14 rotate-12 items-center justify-center rounded-full border-2 font-mono text-[10px] font-black uppercase tracking-tight text-white shadow-lg"
-                style={{
-                  background: `radial-gradient(circle at 40% 40%, ${p.accent}, color-mix(in srgb, ${p.accent} 60%, #000))`,
-                  borderColor: p.accent,
-                  boxShadow: `0 0 20px ${p.accent}66`,
-                }}
-              >
-                <div className="text-center leading-none">
-                  <div className="text-[7px] opacity-80">ISSUE</div>
-                  <div className="text-sm">#{p.issue}</div>
-                </div>
-              </div>
-
-              {/* action word burst (appears on hover) */}
-              <motion.div
-                className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 z-20 font-display text-2xl font-black uppercase opacity-0 group-hover:opacity-100"
-                style={{
-                  color: p.accent,
-                  textShadow: `0 0 20px ${p.accent}, 0 0 40px ${p.accent}88`,
-                  WebkitTextStroke: "1px rgba(255,255,255,0.3)",
-                }}
-                initial={false}
-                animate={{}}
-                whileHover={{ scale: [1, 1.15, 1], rotate: [-3, 3, -2, 0] }}
-                transition={{ duration: 0.4 }}
-              >
-                {p.action}
-              </motion.div>
-
-              {/* panel preview area */}
-              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b border-foreground/10">
-                {/* big number */}
-                <motion.span
-                  className="font-display text-[130px] font-black leading-none text-foreground/8 transition-transform duration-700 group-hover:scale-110"
-                  style={{ textShadow: `0 0 60px ${p.accent}44` }}
-                >
-                  {p.issue}
-                </motion.span>
-                {/* action lines radiating from center */}
-                <svg className="absolute inset-0 h-full w-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
-                  {Array.from({length:12}).map((_,li)=>{
-                    const a=(li/12)*Math.PI*2;
-                    const len=160+Math.random()*40;
-                    return <line key={li} x1="200" y1="150"
-                      x2={200+Math.cos(a)*len} y2={150+Math.sin(a)*len}
-                      stroke={p.accent} strokeWidth="0.8" strokeOpacity="0.35"/>;
-                  })}
-                </svg>
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
-                {/* HUD corners */}
-                {(["tl","tr","bl","br"] as const).map((c) => (
-                  <span key={c}
-                    className={`absolute size-4 transition-colors duration-300 group-hover:border-current ${
-                      c==="tl"?"left-3 top-3 border-l border-t border-foreground/30":
-                      c==="tr"?"right-3 top-3 border-r border-t border-foreground/30":
-                      c==="bl"?"bottom-3 left-3 border-b border-l border-foreground/30":
-                             "bottom-3 right-3 border-b border-r border-foreground/30"
-                    }`}
-                    style={{ color: p.accent }}
-                  />
-                ))}
-              </div>
-
-              <div className="relative p-6">
-                <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground">
-                  {p.tag}
-                </p>
-                <h3 className="font-display text-2xl font-semibold">{p.name}</h3>
-                <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
-
-                {/* tech pills */}
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {p.tech.map((t) => (
-                    <span key={t}
-                      className="rounded-full border border-foreground/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-foreground/50">
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                {/* CTA buttons */}
-                <div className="mt-5 flex items-center gap-3">
-                  <SpiderCrawlButton
-                    as="div"
-                    onClick={() => window.open(p.github, "_blank")}
-                    data-cursor="hover"
-                    className="flex-1 text-center border border-foreground/15 bg-background/40 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-foreground/70 transition-all duration-300 hover:border-current hover:text-white rounded-lg cursor-none"
-                    style={{ color: p.accent } as any}
-                  >
-                    GitHub
-                  </SpiderCrawlButton>
-                  <a
-                    href={p.live}
-                    data-cursor="hover"
-                    className="flex-1 text-center rounded-lg py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-white transition-all duration-300"
-                    style={{
-                      background: `linear-gradient(135deg, ${p.accent}aa, ${p.accent}55)`,
-                      border: `1px solid ${p.accent}44`,
-                    }}
-                  >
-                    Live Demo →
-                  </a>
-                </div>
-              </div>
-            </motion.article>
-          ))}
-        </div>
+      <div className="relative w-full px-4 md:px-6 mx-auto max-w-[1400px]">
+        {PROJECTS.map((project, i) => (
+           <ProjectCard key={project.name} project={project} index={i} />
+        ))}
       </div>
     </section>
   );

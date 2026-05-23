@@ -70,10 +70,7 @@ function Index() {
             <Projects />
           </WebPullSection>
 
-          <SectionDivider />
-          <WebPullSection>
-            <Footer />
-          </WebPullSection>
+          <Footer />
         </>
       )}
     </main>
