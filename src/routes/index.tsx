@@ -2,18 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { CityBackground } from "@/components/CityBackground";
 import { CustomCursor } from "@/components/CustomCursor";
+import { FloatingNav } from "@/components/FloatingNav";
 import { IntroLoader } from "@/components/IntroLoader";
 import { Hero } from "@/components/Hero";
+import { About } from "@/components/About";
 import { OriginStory } from "@/components/OriginStory";
-import { SpiderSenseRadar } from "@/components/SpiderSenseRadar";
+import { TacticalArsenal } from "@/components/TacticalArsenal";
 import { Projects } from "@/components/Projects";
-import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { SectionDivider, WebPullSection } from "@/components/SectionDivider";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { ScrollProgress } from "@/components/ScrollProgress";
 
-export const Route = createFileRoute("/")(({
+export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/")(({
       },
     ],
   }),
-} as any));
+});
 
 function Index() {
   const [booted, setBooted] = useState(false);
@@ -46,7 +47,13 @@ function Index() {
 
       {booted && (
         <>
+          <FloatingNav />
           <Hero />
+
+          <SectionDivider />
+          <WebPullSection>
+            <About />
+          </WebPullSection>
 
           <SectionDivider />
           <WebPullSection>
@@ -55,7 +62,7 @@ function Index() {
 
           <SectionDivider />
           <WebPullSection>
-            <SpiderSenseRadar />
+            <TacticalArsenal />
           </WebPullSection>
 
           <SectionDivider />
@@ -65,10 +72,8 @@ function Index() {
 
           <SectionDivider />
           <WebPullSection>
-            <Contact />
+            <Footer />
           </WebPullSection>
-
-          <Footer />
         </>
       )}
     </main>

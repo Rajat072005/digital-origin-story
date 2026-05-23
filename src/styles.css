@@ -120,17 +120,21 @@
   * {
     border-color: var(--color-border);
   }
-  html,
+  html {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-  }
-  body {
     cursor: none;
+    overflow-y: visible;
     overflow-x: hidden;
+    min-height: 100vh;
   }
   ::selection {
     background: color-mix(in oklab, var(--electric) 60%, transparent);
@@ -339,6 +343,30 @@
 .animate-lightning { animation: lightning 9s ease-in-out infinite; }
 .animate-scan { animation: scan 4s linear infinite; }
 
+/* Spider path-crawl — drives offset-distance along generated bezier */
+@keyframes spider-path-crawl {
+  from { offset-distance: 0%; }
+  to   { offset-distance: 100%; }
+}
+
+/*
+ * Spider depth — synchronized with spider-path-crawl (same duration).
+ * Simulates the spider crawling around to the BACK of the button:
+ *   0–28%  : front face — full size, full glow
+ *   28–40% : going around the edge — shrinking, dimming, blurring
+ *   40–62% : back face — small, dim, frosted-glass blur
+ *   62–72% : coming back around the edge
+ *   72–100%: front face again — full presence
+ */
+@keyframes spider-depth {
+  0%   { transform: scale(1);    opacity: 1;    filter: none; }
+  28%  { transform: scale(1);    opacity: 1;    filter: none; }
+  40%  { transform: scale(0.62); opacity: 0.38; filter: blur(0.8px) brightness(0.6); }
+  62%  { transform: scale(0.62); opacity: 0.38; filter: blur(0.8px) brightness(0.6); }
+  72%  { transform: scale(1);    opacity: 1;    filter: none; }
+  100% { transform: scale(1);    opacity: 1;    filter: none; }
+}
+
 /* Spider-Sense danger pulse */
 @keyframes spider-sense-pulse {
   0%   { transform: scale(0.8); opacity: 0.9; }
@@ -388,3 +416,30 @@
   98%       { opacity: 1; }
 }
 .animate-crt { animation: crt-flicker 8s ease-in-out infinite; }
+
+/* ── Sleek Custom Cinematic Scrollbar ── */
+@layer base {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
