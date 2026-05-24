@@ -5,43 +5,43 @@ import { SpiderCrawlButton } from "./SpiderCrawl";
 const PROJECTS = [
   {
     name: "EatInSync",
-    tag: "Food Intelligence",
-    body: "An AI-powered dining companion that scans menus, learns your taste, and recommends the next bite worth remembering.",
+    tag: "NEURAL TASTE PROTOCOL",
+    body: "An AI-powered culinary intelligence system that learns human taste behavior and transforms ordinary dining into a personalized multiversal experience.",
     issue: "01",
     action: "THWIP!",
     accent: "#ff2b5e",
     palette: "from-[#ff2b5e]/30 via-black/80 to-black",
     github: "https://github.com/Rajat072005",
     live: "#",
-    tech: ["React", "Node.js", "MongoDB", "AI/ML"],
+    tech: ["AI/ML","React", "Node.js", "MongoDB"],
     universe: "EARTH-1610 // MILES",
     rotation: -1,
   },
   {
     name: "Moodify",
-    tag: "Audio Universe",
-    body: "Visualize how a track feels — emotional gradients, audio-reactive UI, and a soundscape you can step inside.",
+    tag: "SONIC REALITY ENGINE",
+    body: "A neural emotion-detection system that interprets facial expressions in real time and synchronizes personalized  recommendations with the user’s emotional state.",
     issue: "02",
     action: "GLITCH!",
     accent: "#a78bfa",
     palette: "from-[#a78bfa]/30 via-black/80 to-black",
     github: "https://github.com/Rajat072005",
     live: "#",
-    tech: ["React", "Spotify API", "GSAP", "Canvas"],
+    tech: ["OpenCV", "Flask", "FER", "Computer Vision"],
     universe: "EARTH-65 // GWEN",
     rotation: 1,
   },
   {
     name: "Paste App",
-    tag: "Encrypted Terminal",
-    body: "A secure, terminal-inspired space to share code & secrets with end-to-end encryption and zero clutter.",
+    tag: "CLASSIFIED DATA TERMINAL",
+    body: "A classified transmission interface engineered for secure code sharing, encrypted communication, and distraction-free collaboration across digital dimensions.",
     issue: "03",
-    action: "SHOCK!",
+    action: "BAM!",
     accent: "#5fb6ff",
     palette: "from-[#5fb6ff]/30 via-black/80 to-black",
     github: "https://github.com/Rajat072005",
     live: "#",
-    tech: ["Next.js", "PostgreSQL", "Prisma", "Encryption"],
+    tech: ["Next.js", "MongoDB", "WebGL", "React3Fiber"],
     universe: "EARTH-928 // MIGUEL",
     rotation: -1.5,
   },
@@ -153,7 +153,7 @@ const ProjectCard = ({ project, index }: { project: any; index: number }) => {
                     boxShadow: `-6px 6px 0px 0px rgba(255,255,255,0.2)` 
                  }}
                >
-                 INITIATE_LINK //
+                 ENTER DIMENSION //
                </a>
             </div>
           </div>

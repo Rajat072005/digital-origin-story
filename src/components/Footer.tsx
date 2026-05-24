@@ -62,10 +62,10 @@ export function Footer() {
               className="font-display text-4xl md:text-6xl font-bold uppercase tracking-tighter text-white animate-spider-glitch"
               data-text="ESTABLISH CONNECTION"
             >
-              Establish Connection
+              TRANSMIT YOUR SIGNAL
             </h2>
             <p className="mt-5 font-mono text-[10px] md:text-[11px] tracking-[0.3em] uppercase text-white/50 max-w-lg">
-              Transmit your coordinates across the multiverse.
+              Transmit your coordinates I'll Swing Back To you.
             </p>
           </div>
 
@@ -77,7 +77,7 @@ export function Footer() {
                   required
                   value={fields.name}
                   onChange={(e) => setFields((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="IDENTIFIER [ NAME ]"
+                  placeholder="VARIANT_ID [ NAME ]"
                   className="w-full bg-white/5 border-b-2 border-white/20 px-5 py-4 font-mono text-[11px] uppercase tracking-widest text-white placeholder:text-white/30 outline-none transition-all duration-300 focus:border-[#00f0ff] focus:bg-[#00f0ff]/10 cursor-none"
                 />
                 <input
@@ -85,7 +85,7 @@ export function Footer() {
                   required
                   value={fields.email}
                   onChange={(e) => setFields((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="FREQUENCY [ EMAIL ]"
+                  placeholder="UNIVERSE_ID [ EMAIL ]"
                   className="w-full bg-white/5 border-b-2 border-white/20 px-5 py-4 font-mono text-[11px] uppercase tracking-widest text-white placeholder:text-white/30 outline-none transition-all duration-300 focus:border-[#ff007f] focus:bg-[#ff007f]/10 cursor-none"
                 />
               </div>
@@ -97,7 +97,7 @@ export function Footer() {
                   required
                   value={fields.message}
                   onChange={(e) => setFields((f) => ({ ...f, message: e.target.value }))}
-                  placeholder="MESSAGE_PAYLOAD..."
+                  placeholder="MISSION_BRIEF..."
                   rows={4}
                   className="w-full resize-none bg-white/5 border-b-2 border-white/20 px-5 py-5 font-mono text-[11px] uppercase tracking-widest text-white placeholder:text-white/30 outline-none transition-all duration-300 focus:border-white focus:bg-white/10 cursor-none"
                 />
@@ -128,7 +128,7 @@ export function Footer() {
                 <div className="text-4xl text-[#00f0ff]">✓</div>
               </div>
               <div className="font-mono text-[11px] uppercase tracking-[0.5em] text-[#00f0ff]">
-                // TRANSMISSION_RECEIVED
+                // Your signal is now travelling through the web.
               </div>
               <p className="font-display text-3xl md:text-4xl font-bold text-white uppercase tracking-tighter">Signal Locked.</p>
               <p className="font-mono text-[10px] tracking-[0.2em] text-white/50 uppercase mt-2">With great power comes great response time.</p>

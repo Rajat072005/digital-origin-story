@@ -13,33 +13,33 @@ const SPIDER_YELLOW = "#ffe600";
 const MODES: { id: TabId; label: string; accent: string; code: string }[] = [
   { id: "frontend", label: "WEB SYNERGY", accent: SPIDER_CYAN, code: "TRGT-01" },
   { id: "backend", label: "CORE SYSTEMS", accent: SPIDER_MAGENTA, code: "TRGT-02" },
-  { id: "neural", label: "NEURAL NETWORK", accent: SPIDER_YELLOW, code: "TRGT-03" },
+  { id: "neural", label: "NEURAL SYSTEMS", accent: SPIDER_YELLOW, code: "TRGT-03" },
 ];
 
 const DATA: Record<TabId, Skill[]> = {
   frontend: [
-    { name: "React.js", level: 95, color: SPIDER_CYAN, desc: "UI Synthesizer", cat: "FRONTEND" },
-    { name: "Redux", level: 88, color: SPIDER_MAGENTA, desc: "State Management", cat: "FRONTEND" },
-    { name: "JavaScript", level: 92, color: SPIDER_YELLOW, desc: "Core Logic", cat: "LANGUAGE" },
-    { name: "C++", level: 85, color: SPIDER_MAGENTA, desc: "System Language", cat: "LANGUAGE" },
-    { name: "Python", level: 88, color: SPIDER_CYAN, desc: "Scripting & AI", cat: "LANGUAGE" },
-    { name: "HTML / CSS", level: 92, color: SPIDER_YELLOW, desc: "Structure & Style", cat: "FRONTEND" },
+    { name: "React.js & Three.js", level: 95, color: SPIDER_CYAN, desc: "Interactive Reality Engine", cat: "FRONTEND" },
+    { name: "Tailwind & GSAP", level: 88, color: SPIDER_MAGENTA, desc: "System Design Language", cat: "FRONTEND" },
+    { name: "JavaScript", level: 92, color: SPIDER_YELLOW, desc: "Multiversal Logic Core", cat: "FRONTEND" },
+    { name: "Node.js", level: 85, color: SPIDER_MAGENTA, desc: "Runtime Env", cat: "BACKEND" },
+    { name: "Express.js", level: 88, color: SPIDER_CYAN, desc: "API Framework", cat: "BACKEND" },
+    { name: "MongoDB", level: 92, color: SPIDER_YELLOW, desc: "Distributed Memory Storage", cat: "DATABASE" },
   ],
   backend: [
-    { name: "Node.js", level: 88, color: SPIDER_YELLOW, desc: "Runtime Env", cat: "BACKEND" },
-    { name: "Express.js", level: 85, color: SPIDER_MAGENTA, desc: "API Framework", cat: "BACKEND" },
-    { name: "MongoDB", level: 82, color: SPIDER_CYAN, desc: "NoSQL Database", cat: "DATABASE" },
-    { name: "DSA", level: 90, color: SPIDER_MAGENTA, desc: "160+ Problems", cat: "CORE" },
-    { name: "OOP", level: 85, color: SPIDER_CYAN, desc: "Design Patterns", cat: "CORE" },
+    { name: "REST APIs", level: 88, color: SPIDER_YELLOW, desc: "Protocol Communication", cat: "BACKEND" },
+    { name: "Python", level: 85, color: SPIDER_MAGENTA, desc: "AI/ML Applications", cat: "AI/ML" },
+    { name: "OOP", level: 90, color: SPIDER_CYAN, desc: "Object-Oriented Programming", cat: "CORE" },
+    { name: "DSA(C++)", level: 90, color: SPIDER_MAGENTA, desc: "200+ Problems", cat: "CORE" },
     { name: "OS & DBMS", level: 80, color: SPIDER_YELLOW, desc: "System Fundamentals", cat: "CORE" },
+    { name: "Git & Postman", level: 85, color: SPIDER_CYAN, desc: "API Testing", cat: "TOOLS" },
   ],
   neural: [
     { name: "TensorFlow", level: 75, color: SPIDER_MAGENTA, desc: "Neural Networks", cat: "AI/ML" },
     { name: "OpenCV", level: 78, color: SPIDER_CYAN, desc: "Computer Vision", cat: "AI/ML" },
     { name: "FER System", level: 80, color: SPIDER_YELLOW, desc: "Emotion Recognition", cat: "AI/ML" },
-    { name: "Git", level: 85, color: SPIDER_MAGENTA, desc: "Version Control", cat: "TOOLS" },
-    { name: "Postman", level: 82, color: SPIDER_YELLOW, desc: "API Testing", cat: "TOOLS" },
-    { name: "REST APIs", level: 85, color: SPIDER_CYAN, desc: "System Integration", cat: "ARCHITECTURE" },
+    { name: "Deep Learning", level: 85, color: SPIDER_MAGENTA, desc: "Multi-Layer Cognitive Training", cat: "AI/ML" },
+    { name: "AI Agents", level: 82, color: SPIDER_YELLOW, desc: "Self-Directed AI Protocols", cat: "AI/ML" },
+    { name: "Generative AI", level: 85, color: SPIDER_CYAN, desc: "Synthetic Content Intelligence", cat: "AI/ML" },
   ],
 };
 
@@ -68,7 +68,7 @@ function ProjectedSkill({ skill, align, delay, offset }: { skill: Skill; align: 
       animate={{ opacity: 1, x: isLeft ? offset : -offset, filter: "blur(0px)" }}
       exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
       transition={{ duration: 0.5, delay, ease: [0.2, 1, 0.3, 1] }}
-      className={`relative flex items-center gap-4 ${isLeft ? "justify-end flex-row" : "justify-start flex-row-reverse"} group cursor-none`}
+      className={`relative flex items-center gap-10 ${isLeft ? "justify-end flex-row" : "justify-end flex-row-reverse"} group cursor-none`}
     >
       {/* Text Data */}
       <div className={`flex flex-col ${isLeft ? "items-end text-right" : "items-start text-left"}`}>
@@ -232,8 +232,8 @@ export function TacticalArsenal() {
   const leftSkills = currentSkills.slice(0, 3);
   const rightSkills = currentSkills.slice(3, 6);
 
-  // Set offsets to 0 for a perfectly straight, symmetrical HUD list
-  const curveOffsets = [0, 0, 0];
+  // Set offsets to wrap around the central radar
+  const curveOffsets = [60, 0, 60];
 
   return (
     <section id="skills" className="relative min-h-screen py-24 flex flex-col justify-center overflow-hidden">

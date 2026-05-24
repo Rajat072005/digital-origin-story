@@ -129,13 +129,13 @@ export function Hero() {
   };
 
   return (
-    <section className="relative h-[100svh] w-full overflow-hidden bg-[#060610]">
-      <div aria-hidden className="pointer-events-none absolute inset-0" style={{
-        background: "radial-gradient(ellipse 70% 55% at 50% 45%,#0d1530 0%,#060611 55%,#020205 100%)"
+    <section className="relative h-[100svh] w-full overflow-hidden bg-transparent">
+      {/* Spider-Verse Halftone / Ben-Day Dots Background Overlay */}
+      <div className="pointer-events-none absolute inset-0 mix-blend-overlay opacity-[0.15]" style={{
+        backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+        backgroundSize: "4px 4px"
       }} />
-      <div aria-hidden className="pointer-events-none absolute inset-0" style={{
-        background: "radial-gradient(ellipse 90% 70% at 50% 50%,transparent 55%,rgba(0,0,0,0.75) 100%)"
-      }} />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0a0a1a]/80 via-transparent to-[#020205]/90" />
 
       {mounted && (
         <div className="absolute inset-0"
@@ -146,7 +146,6 @@ export function Hero() {
             camera={{ fov: 32, position: [0, 1.15, 4.2] }}
             className="absolute inset-0"
           >
-            <color attach="background" args={["#060610"]} />
             <fog attach="fog" args={["#05060c", 8, 16]} />
             <Scene isDecrypting={isDecrypting} mouse={mouse} />
             <Suspense fallback={null}><Environment preset="night" /></Suspense>
@@ -280,12 +279,12 @@ function OrbitalRings({
     // Pure mouse interactivity: tilt/pan rings based on mouse position (no auto spin/bounce)
     ringsRef.current.rotation.x = THREE.MathUtils.lerp(
       ringsRef.current.rotation.x,
-      mouse.current.y * 0.35,
+      mouse.current.y * 0.12,
       0.05
     );
     ringsRef.current.rotation.y = THREE.MathUtils.lerp(
       ringsRef.current.rotation.y,
-      mouse.current.x * 0.45,
+      mouse.current.x * 0.18,
       0.05
     );
     // Force static scale 1.0 (prevents automatic zooming in and out)
@@ -440,11 +439,23 @@ function BootTerminal() {
 function DecryptButton({ onClick }: { onClick: () => void }) {
   return (
     <SpiderCrawlButton onClick={onClick} data-cursor="hover"
-      className="group relative cursor-none overflow-hidden border border-[#5fb6ff]/40 bg-[#0a0a0a]/60 px-7 py-3 font-mono text-[11px] uppercase tracking-[0.4em] text-[#cfe2ff] backdrop-blur-md transition hover:border-[#5fb6ff] hover:text-white"
-      style={{ boxShadow: "0 0 24px rgba(95,182,255,0.25),inset 0 0 14px rgba(95,182,255,0.12)" }}>
-      <span className="relative z-10">[ Initialize Decryption ]</span>
-      <span aria-hidden
-        className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[#5fb6ff]/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+      className="group relative cursor-none overflow-hidden border-2 border-[#ff007f]/80 bg-[#060610]/80 px-10 py-4 font-display text-lg font-bold uppercase tracking-widest text-white backdrop-blur-md transition-all duration-300 hover:scale-105 hover:bg-[#ff007f]/20 hover:border-[#00f0ff] hover:shadow-[0_0_30px_rgba(0,240,255,0.4)]"
+      style={{ textShadow: "2px 0px 0px rgba(0,240,255,0.8), -2px 0px 0px rgba(255,0,127,0.8)" }}>
+      {/* Halftone pattern inside button */}
+      <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "4px 4px" }}></div>
+
+      {/* Glitching scanline */}
+      <span aria-hidden className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-[#00f0ff]/40 to-transparent transition-transform duration-700 ease-in-out group-hover:translate-x-full" />
+
+      <span className="relative z-10 flex items-center gap-3">
+        <span className="text-[#00f0ff] font-mono text-[10px] animate-pulse">❖</span>
+        INITIATE OVERRIDE
+        <span className="text-[#ff007f] font-mono text-[10px] animate-pulse">❖</span>
+      </span>
+
+      {/* Decorative high-tech corners */}
+      <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#00f0ff] transition-colors group-hover:border-[#ff007f]"></div>
+      <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#00f0ff] transition-colors group-hover:border-[#ff007f]"></div>
     </SpiderCrawlButton>
   );
 }
@@ -453,17 +464,24 @@ function AvatarTypography() {
   return (
     <motion.div key="avatar-ui" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute inset-0 flex items-center justify-between px-6 md:px-20">
-      <div className="max-w-[42%]">
-        <div className="font-mono text-[10px] uppercase tracking-[0.4em] text-[#7aa9ff]/80">Identity // 001</div>
-        <h1 className="mt-3 font-display text-4xl font-bold leading-[0.95] tracking-tight text-white md:text-6xl">
+      className="absolute inset-0 flex items-center justify-between px-6 md:px-20 pointer-events-none">
+      <div className="max-w-[45%] pl-4 md:pl-10">
+        <div className="font-mono text-[10px] uppercase tracking-[0.5em] text-[#00f0ff] mb-2 flex items-center gap-2">
+          <span className="w-2 h-2 bg-[#ff007f] animate-pulse"></span>
+          Identity // 001
+        </div>
+        <h1 className="font-display text-5xl md:text-[5.5rem] font-black italic leading-[0.85] tracking-tighter text-white uppercase"
+          style={{ textShadow: "4px 4px 0px rgba(255,0,127,0.8), -3px -3px 0px rgba(0,240,255,0.8)" }}>
           <ScrambleText text="RAJAT" /><br /><ScrambleText text="TREHAN" delay={0.25} />
         </h1>
       </div>
-      <div className="max-w-[42%] text-right">
-        <MaskedSlide text="FULL STACK" />
-        <MaskedSlide text="DEVELOPER" delay={0.18} />
-        <div className="mt-3 font-mono text-[10px] uppercase tracking-[0.4em] text-[#ff2b5e]/80">Variant // 001</div>
+      <div className="max-w-[45%] text-right pr-4 md:pr-10">
+        <MaskedSlide text="FULL STACK" className="text-white" />
+        <MaskedSlide text="DEVELOPER" delay={0.18} className="text-transparent" style={{ WebkitTextStroke: "2px #00f0ff", textShadow: "4px 4px 0px rgba(255,0,127,0.5)" }} />
+        <div className="mt-4 font-mono text-[10px] uppercase tracking-[0.5em] text-[#ff007f] flex items-center justify-end gap-2">
+          Variant // 1610
+          <span className="w-2 h-2 bg-[#00f0ff] animate-pulse"></span>
+        </div>
       </div>
     </motion.div>
   );
@@ -474,6 +492,8 @@ function ScrambleText({ text, delay = 0 }: { text: string; delay?: number }) {
   const [display, setDisplay] = useState(() =>
     text.split("").map((c) => c === " " ? " " : CIPHER[Math.floor(Math.random() * CIPHER.length)]).join("")
   );
+  const [isScrambling, setIsScrambling] = useState(true);
+
   useEffect(() => {
     let iv = 0;
     const start = performance.now() + delay * 1000;
@@ -484,20 +504,25 @@ function ScrambleText({ text, delay = 0 }: { text: string; delay?: number }) {
         setDisplay(text.split("").map((c, i) =>
           i < lock || c === " " ? c : CIPHER[Math.floor(Math.random() * CIPHER.length)]
         ).join(""));
-        if (t >= 1) { setDisplay(text); clearInterval(iv); }
+        if (t >= 1) {
+          setDisplay(text);
+          setIsScrambling(false);
+          clearInterval(iv);
+        }
       }, 45);
     }, delay * 1000);
     return () => { clearTimeout(wait); clearInterval(iv); };
   }, [text, delay]);
-  return <span className="font-mono">{display}</span>;
+  return <span className={isScrambling ? "font-mono" : ""}>{display}</span>;
 }
 
-function MaskedSlide({ text, delay = 0 }: { text: string; delay?: number }) {
+function MaskedSlide({ text, delay = 0, className = "text-white", style }: { text: string; delay?: number, className?: string, style?: React.CSSProperties }) {
   return (
-    <div className="relative overflow-hidden">
-      <motion.div initial={{ y: "110%" }} animate={{ y: "0%" }}
+    <div className="relative overflow-hidden pr-8 pb-4 pt-2 -mr-8 -mb-4 -mt-2">
+      <motion.div initial={{ y: "150%" }} animate={{ y: "0%" }}
         transition={{ duration: 0.9, delay, ease: [0.7, 0, 0.2, 1] }}
-        className="font-display text-3xl font-bold uppercase tracking-tight text-white md:text-5xl">
+        className={`font-display text-4xl md:text-7xl font-black italic uppercase tracking-tighter ${className}`}
+        style={style}>
         {text}
       </motion.div>
     </div>
