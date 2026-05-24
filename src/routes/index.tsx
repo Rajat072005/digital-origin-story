@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { CityBackground } from "@/components/CityBackground";
 import { CustomCursor } from "@/components/CustomCursor";
 import { FloatingNav } from "@/components/FloatingNav";
-import { IntroLoader } from "@/components/IntroLoader";
 import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
 import { OriginStory } from "@/components/OriginStory";
@@ -34,45 +32,36 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [booted, setBooted] = useState(false);
-
   return (
     <main className="relative min-h-screen overflow-x-hidden">
       <CityBackground />
       <CustomCursor />
       <SmoothScroll />
       <ScrollProgress />
+      <FloatingNav />
+      <Hero />
 
-      {!booted && <IntroLoader onDone={() => setBooted(true)} />}
+      <SectionDivider />
+      <WebPullSection>
+        <About />
+      </WebPullSection>
 
-      {booted && (
-        <>
-          <FloatingNav />
-          <Hero />
+      <SectionDivider />
+      <WebPullSection>
+        <OriginStory />
+      </WebPullSection>
 
-          <SectionDivider />
-          <WebPullSection>
-            <About />
-          </WebPullSection>
+      <SectionDivider />
+      <WebPullSection>
+        <TacticalArsenal />
+      </WebPullSection>
 
-          <SectionDivider />
-          <WebPullSection>
-            <OriginStory />
-          </WebPullSection>
+      <SectionDivider />
+      <WebPullSection>
+        <Projects />
+      </WebPullSection>
 
-          <SectionDivider />
-          <WebPullSection>
-            <TacticalArsenal />
-          </WebPullSection>
-
-          <SectionDivider />
-          <WebPullSection>
-            <Projects />
-          </WebPullSection>
-
-          <Footer />
-        </>
-      )}
+      <Footer />
     </main>
   );
 }

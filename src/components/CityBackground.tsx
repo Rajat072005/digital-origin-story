@@ -13,18 +13,30 @@ export function CityBackground() {
   const skyRef     = useRef<HTMLDivElement>(null);
   const wash1Ref   = useRef<HTMLDivElement>(null);
   const wash2Ref   = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
   const lastScrollY = useRef(0);
   const scrollVel   = useRef(0);
 
-  /* ── scroll parallax ── */
+  /* ── scroll parallax (Direct DOM updates for lag-free rendering) ── */
   useEffect(() => {
     const onScroll = () => {
       const sy = window.scrollY;
       scrollVel.current = Math.abs(sy - lastScrollY.current);
       lastScrollY.current = sy;
-      setScrollY(sy);
+      
+      if (skyRef.current) {
+        skyRef.current.style.transform = `translateY(${sy * 0.08}px)`;
+      }
+      if (wash1Ref.current) {
+        wash1Ref.current.style.transform = `translateY(${sy * 0.18}px)`;
+      }
+      if (wash2Ref.current) {
+        wash2Ref.current.style.transform = `translateY(${sy * 0.30}px)`;
+      }
     };
+
+    // Initial positioning
+    onScroll();
+
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -100,11 +112,6 @@ export function CityBackground() {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
   }, []);
 
-  // Parallax offsets — each layer moves at different speed
-  const skyOffset    = scrollY * 0.08;   // slowest — buildings barely move
-  const wash1Offset  = scrollY * 0.18;   // mid layer
-  const wash2Offset  = scrollY * 0.30;   // fastest — gradient foreground
-
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background">
 
@@ -114,7 +121,7 @@ export function CityBackground() {
         className="absolute inset-0 bg-cover bg-center opacity-50"
         style={{
           backgroundImage: `url(${skyline})`,
-          transform: `translateY(${skyOffset}px)`,
+          transform: `translateY(0px)`,
           willChange: "transform",
         }}
       />
@@ -125,7 +132,7 @@ export function CityBackground() {
         className="absolute inset-0"
         style={{
           background: "var(--gradient-hero)",
-          transform: `translateY(${wash1Offset}px)`,
+          transform: `translateY(0px)`,
           willChange: "transform",
         }}
       />
@@ -135,7 +142,7 @@ export function CityBackground() {
         ref={wash2Ref}
         className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/30 to-background"
         style={{
-          transform: `translateY(${wash2Offset}px)`,
+          transform: `translateY(0px)`,
           willChange: "transform",
         }}
       />

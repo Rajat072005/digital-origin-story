@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree, type ThreeElements } from "@react-three/fiber";
-import { useGLTF, useAnimations, Environment } from "@react-three/drei";
+import { useGLTF, useAnimations, Environment, useProgress } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
 import { SpiderCrawlButton } from "./SpiderCrawl";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -107,6 +107,9 @@ export function Hero() {
   const [canvasReady, setCanvasReady] = useState(false);
   const mouse = useRef({ x: 0, y: 0 });
 
+  const { progress: loadProgress, active, loaded, total } = useProgress();
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     const onMove = (e: MouseEvent) => {
@@ -114,13 +117,32 @@ export function Hero() {
       mouse.current.y = (e.clientY / window.innerHeight - 0.5) * 2;
     };
     window.addEventListener("mousemove", onMove);
-    const tBoot = setTimeout(() => setShowBoot(false), 1600);
-    const tReady = setTimeout(() => setCanvasReady(true), 300);
+    const tBoot = setTimeout(() => setMinTimeElapsed(true), 1600);
     return () => {
       window.removeEventListener("mousemove", onMove);
-      clearTimeout(tBoot); clearTimeout(tReady);
+      clearTimeout(tBoot);
     };
   }, []);
+
+  useEffect(() => {
+    // Wait until minimum boot animation finishes AND 3D models are fully downloaded
+    if (minTimeElapsed && !active && loaded >= total) {
+      setShowBoot(false);
+      setCanvasReady(true);
+    }
+  }, [minTimeElapsed, active, loaded, total]);
+
+  // Lock body scroll while assets are loading for smooth screen lock experience
+  useEffect(() => {
+    if (showBoot) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showBoot]);
 
   const handleDecrypt = () => {
     if (isDecrypting) return;
@@ -147,7 +169,7 @@ export function Hero() {
             className="absolute inset-0"
           >
             <fog attach="fog" args={["#05060c", 8, 16]} />
-            <Scene isDecrypting={isDecrypting} mouse={mouse} />
+            <Scene isDecrypting={isDecrypting} mouse={mouse} showBoot={showBoot} />
             <Suspense fallback={null}><Environment preset="night" /></Suspense>
           </Canvas>
         </div>
@@ -155,7 +177,7 @@ export function Hero() {
 
       <div className="pointer-events-none absolute inset-0 z-20">
         <HeroHUD showText={showText} />
-        <AnimatePresence>{showBoot && <BootTerminal key="boot" />}</AnimatePresence>
+        <AnimatePresence>{showBoot && <BootTerminal key="boot" loadProgress={loadProgress} />}</AnimatePresence>
         <AnimatePresence>
           {!showBoot && !isDecrypting && (
             <motion.div key="cta"
@@ -183,9 +205,11 @@ const _lookAt = new THREE.Vector3();
 function Scene({
   isDecrypting,
   mouse,
+  showBoot,
 }: {
   isDecrypting: boolean;
   mouse: React.MutableRefObject<{ x: number; y: number }>;
+  showBoot: boolean;
 }) {
   const { camera } = useThree();
   const progress = useRef(0);
@@ -306,7 +330,7 @@ function Scene({
 
       <group ref={modelsGroup}>
         <Suspense fallback={null}>
-          <SpiderManModel progressRef={progress} />
+          <SpiderManModel progressRef={progress} isLoaded={!showBoot} />
           <AvatarModel progressRef={progress} />
         </Suspense>
       </group>
@@ -549,8 +573,10 @@ function OrbitalRings({
    SPIDER-MAN  (renderOrder 0 — writes depth first)
    ========================================================================= */
 export function SpiderManModel({
-  progressRef, ...props
-}: ModelGroupProps & { progressRef: React.MutableRefObject<number> }) {
+  progressRef,
+  isLoaded,
+  ...props
+}: ModelGroupProps & { progressRef: React.MutableRefObject<number>; isLoaded: boolean }) {
   const { scene, animations } = useGLTF("/models/spiderman_optimized.glb");
   const { actions } = useAnimations(animations, scene);
 
@@ -565,20 +591,23 @@ export function SpiderManModel({
   }, [scene, progressRef]);
 
   useEffect(() => {
+    if (!isLoaded) return; // Wait until terminal gets away!
+
     const idle = "SK_1036_1036001_Lobby|Lobby_Half_Idle";
     const crack = "SK_1036_1036001_Lobby|Lobby_Half_Personality";
     if (actions[crack]) {
       const a = actions[crack]!;
       a.reset().fadeIn(0.2).setLoop(THREE.LoopOnce, 1).play();
       a.clampWhenFinished = true;
-      setTimeout(
+      const t = setTimeout(
         () => actions[idle]?.reset().fadeIn(0.5).play(),
         a.getClip().duration * 1000 - 400
       );
+      return () => clearTimeout(t);
     } else {
       actions[idle]?.reset().play();
     }
-  }, [actions]);
+  }, [actions, isLoaded]);
 
   return (
     <group {...props} dispose={null}>
@@ -643,21 +672,80 @@ function AvatarModel({
 /* =========================================================================
    UI OVERLAYS
    ========================================================================= */
-function BootTerminal() {
+function BootTerminal({ loadProgress }: { loadProgress: number }) {
   const lines = [
-    "> EARTH-1610 // BOOT SEQUENCE",
-    "> DECRYPTING VARIANT_001 ...",
-    "> NEURAL HANDSHAKE: OK",
-    "> RENDERING IDENTITY ...",
+    "> SYSTEM INITIALIZATION ... OK",
+    "> COLLAPSING MULTIVERSE RIFTS ...",
+    "> CHRONO-METRICS SYNC: EARTH-1610",
+    `> DOWNLOAD ASSETS: ${Math.round(loadProgress)}%`,
+    "> CALIBRATING HUD INTERACTION ...",
   ];
+
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 0.5 }}
-      className="absolute left-6 top-24 font-mono text-[11px] uppercase tracking-[0.3em] text-[#7aa9ff] md:left-10 md:top-28">
-      {lines.map((l, i) => (
-        <motion.div key={l} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2, delay: i * 0.2 }} className="leading-relaxed">{l}
-        </motion.div>
-      ))}
+    <motion.div
+      exit={{ opacity: 0, filter: "blur(20px)" }}
+      transition={{ duration: 0.8, ease: [0.77, 0, 0.175, 1] }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#05060c]/60 backdrop-blur-lg pointer-events-auto"
+    >
+      {/* Animated Matrix scanline overlay */}
+      <div className="absolute inset-0 pointer-events-none scanlines opacity-20" />
+      
+      {/* Premium Sci-Fi Terminal Container */}
+      <div className="relative w-full max-w-lg p-8 mx-4 border border-[#00f0ff]/15 bg-[#030408]/85 backdrop-blur-xl shadow-[0_0_50px_rgba(0,240,255,0.08)]">
+        
+        {/* Glowing tactical corner brackets */}
+        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00f0ff]/60" />
+        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#00f0ff]/60" />
+        <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#ff007f]/60" />
+        <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#ff007f]/60" />
+
+        {/* Top telemetry bar */}
+        <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4 font-mono text-[9px] tracking-[0.2em] text-[#00f0ff]/80">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-[#00f0ff] animate-ping rounded-full" />
+            SYS.LOADING // TARGET_1610
+          </div>
+          <span className="text-[#ff007f]">ANOMALY_INDEX: 89.2%</span>
+        </div>
+
+        {/* Console lines */}
+        <div className="space-y-3.5 font-mono text-[11px] md:text-xs uppercase tracking-[0.25em] text-[#7aa9ff]">
+          {lines.map((l, i) => {
+            const threshold = (i / lines.length) * 90;
+            const isShown = loadProgress >= threshold;
+            if (!isShown) return null;
+
+            return (
+              <motion.div
+                key={l}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="flex items-start gap-2.5 leading-relaxed"
+              >
+                <span className="text-[#00f0ff] opacity-80">{">"}</span>
+                <span className={i === lines.length - 1 ? "text-white" : ""}>{l}</span>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Tactical Progress Bar */}
+        <div className="mt-8">
+          <div className="flex justify-between items-center mb-2 font-mono text-[8px] tracking-[0.2em] text-white/50">
+            <span>SECURE LINK TERMINAL</span>
+            <span>{Math.round(loadProgress)}%</span>
+          </div>
+          <div className="relative h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/10">
+            {/* Glowing progress fill */}
+            <motion.div
+              className="h-full bg-gradient-to-r from-[#3a7bff] via-[#00f0ff] to-[#ff2b5e] shadow-[0_0_12px_#00f0ff]"
+              style={{ width: `${loadProgress}%` }}
+              transition={{ ease: "easeOut" }}
+            />
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 }
