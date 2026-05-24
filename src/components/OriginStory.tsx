@@ -3,27 +3,27 @@ import { useState, useRef } from "react";
 
 const PANELS = [
   {
-    chapter: "Chapter 01",
-    title: "Started with C++",
-    body: "Late nights, blinking cursors, and a curiosity that wouldn't sleep. The first compile that actually worked felt like origin energy.",
+    chapter: "TIMELINE_01",
+    title: "BEFORE THE POWERS CAME THE OBSESSION.",
+    body: "Sleepless nights. Terminal windows glowing at 2 A.M .Somewhere between failed compiles and tiny victories, the first successful program felt less like code… and more like a canon event.",
     accent: "from-[var(--crimson)]/40 to-transparent",
     stamp: "BOOT",
     color: "var(--crimson)",
     webColor: "oklch(0.58 0.24 25 / 0.7)",
   },
   {
-    chapter: "Chapter 02",
-    title: "Fell in love with creating experiences.",
-    body: "Code stopped being syntax and started feeling like cinema — pixels, motion, and stories I could build for other humans.",
+    chapter: "TIMELINE_02",
+    title: "DISCOVERED THE WEB COULD FEEL ALIVE.",
+    body: "Code stopped feeling like syntax and started behaving like storytelling — motion, interaction, atmosphere, and experiences capable of pulling people into entirely different realities.",
     accent: "from-[var(--violet-glow)]/40 to-transparent",
     stamp: "ARC",
     color: "var(--violet-glow)",
     webColor: "oklch(0.62 0.21 295 / 0.7)",
   },
   {
-    chapter: "Chapter 03",
-    title: "Now building immersive full-stack applications.",
-    body: "From databases to interfaces, from APIs to atmospheres — shipping products that feel like a place, not a page.",
+    chapter: "TIMELINE_03",
+    title: "NOW ENGINEERING DIGITAL REALITIES.",
+    body: "From neural systems to immersive interfaces, from scalable APIs to cinematic interactions — building intelligent applications designed to feel less like websites and more like living dimensions.",
     accent: "from-[var(--electric)]/40 to-transparent",
     stamp: "NOW",
     color: "var(--electric)",
@@ -141,9 +141,12 @@ export function OriginStory() {
                 <h3 className="font-display text-xl font-semibold leading-tight md:text-2xl">
                   {p.title}
                 </h3>
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                  {p.body}
-                </p>
+                <div className="relative mt-5 mb-2 pl-5">
+                  <div className="absolute left-0 top-1 bottom-1 w-[2px] opacity-70" style={{ backgroundImage: `linear-gradient(to bottom, ${p.color}, transparent)` }} />
+                  <p className="text-[14px] md:text-[15px] leading-[1.8] text-white/70 font-medium">
+                    {p.body}
+                  </p>
+                </div>
 
                 {/* animated web thread on hover */}
                 <svg className="mt-8 h-14 w-full" viewBox="0 0 200 50" fill="none" preserveAspectRatio="none">

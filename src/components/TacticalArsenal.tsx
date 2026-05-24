@@ -78,7 +78,7 @@ function ProjectedSkill({ skill, align, delay, offset }: { skill: Skill; align: 
 
         <div className="relative font-display text-xl sm:text-2xl font-bold uppercase tracking-widest text-white transition-all duration-300 group-hover:scale-[1.02] group-hover:tracking-[0.25em]"
           style={{ textShadow: `2px 0 0 ${SPIDER_MAGENTA}80, -2px 0 0 ${SPIDER_CYAN}80, 0 0 15px ${skill.color}` }}>
-          
+
           {/* Target Brackets that snap outward on hover */}
           <span className={`absolute top-1/2 -translate-y-1/2 transition-all duration-300 opacity-0 group-hover:opacity-100 text-[#ff007f] text-sm font-light ${isLeft ? '-left-2 group-hover:-left-5' : '-left-2 group-hover:-left-5'}`}>[</span>
           {skill.name}
@@ -104,20 +104,20 @@ function ProjectedSkill({ skill, align, delay, offset }: { skill: Skill; align: 
 
       {/* Hexagon Node attached to the imaginary curve */}
       <div className="relative flex items-center justify-center">
-        
+
         {/* Connecting faint line (Base state) */}
         <div className={`absolute top-1/2 ${isLeft ? 'right-[-40px]' : 'left-[-40px]'} w-[40px] h-px bg-white/10 transition-opacity duration-300 group-hover:opacity-0`} />
-        
+
         {/* Connecting bright tether (Hover state) */}
-        <div className={`absolute top-1/2 ${isLeft ? 'right-[-40px]' : 'left-[-40px]'} w-[40px] h-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300`} 
-             style={{ backgroundColor: skill.color, boxShadow: `0 0 10px ${skill.color}` }} />
+        <div className={`absolute top-1/2 ${isLeft ? 'right-[-40px]' : 'left-[-40px]'} w-[40px] h-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300`}
+          style={{ backgroundColor: skill.color, boxShadow: `0 0 10px ${skill.color}` }} />
 
         {/* Sonar Ping Ring */}
-        <div className="absolute inset-0 rounded-full border-2 opacity-0 group-hover:animate-ping pointer-events-none" 
-             style={{ borderColor: skill.color }} />
+        <div className="absolute inset-0 rounded-full border-2 opacity-0 group-hover:animate-ping pointer-events-none"
+          style={{ borderColor: skill.color }} />
 
-        <motion.div 
-          animate={{ rotate: isLeft ? 360 : -360 }} 
+        <motion.div
+          animate={{ rotate: isLeft ? 360 : -360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           className="transition-transform duration-500 group-hover:scale-125"
         >
@@ -247,8 +247,7 @@ export function TacticalArsenal() {
           initial={{ opacity: 0, y: -20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="text-center mb-12 relative z-20"
         >
-          <h2 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl uppercase tracking-tighter text-white mb-4"
-            style={{ textShadow: `3px 0 0 ${SPIDER_MAGENTA}, -3px 0 0 ${SPIDER_CYAN}` }}>
+          <h2 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl uppercase tracking-tighter text-white mb-4 animate-spider-glitch">
             Suit Capabilities
           </h2>
           <p className="font-mono text-xs text-white/50 tracking-widest uppercase">

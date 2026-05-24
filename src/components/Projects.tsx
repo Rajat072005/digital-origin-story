@@ -109,17 +109,25 @@ const ProjectCard = ({ project, index }: { project: any; index: number }) => {
               </span>
             </div>
 
-            <h3 className="font-display text-5xl md:text-7xl font-black text-white uppercase tracking-tight mb-6 leading-none">
-              {project.name}
-            </h3>
+            <div className="relative mb-8">
+              <h3 className="absolute inset-0 font-display text-6xl md:text-8xl font-black italic uppercase tracking-tighter text-transparent translate-x-1.5 translate-y-1.5" style={{ WebkitTextStroke: `2px ${project.accent}`, filter: `drop-shadow(0 0 10px ${project.accent})` }}>
+                {project.name}
+              </h3>
+              <h3 className="relative font-display text-6xl md:text-8xl font-black italic uppercase tracking-tighter text-white leading-none">
+                {project.name}
+              </h3>
+            </div>
             
-            <p className="text-lg md:text-xl text-white/70 leading-relaxed mb-8 max-w-lg">
-              {project.body}
-            </p>
+            <div className="relative mt-4 mb-8 max-w-lg pl-6">
+              <div className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full" style={{ backgroundColor: project.accent, boxShadow: `0 0 10px ${project.accent}` }} />
+              <p className="text-lg md:text-xl text-white/95 leading-relaxed font-medium" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
+                {project.body}
+              </p>
+            </div>
 
-            <div className="flex flex-wrap gap-3 mb-10">
+            <div className="flex flex-wrap gap-2 mb-10">
               {project.tech.map((t: string) => (
-                <span key={t} className="font-mono text-xs tracking-widest text-white/80 uppercase px-4 py-2 border-2 rounded-none bg-black/50" style={{ borderColor: `${project.accent}40` }}>
+                <span key={t} className="font-mono text-[10px] tracking-widest text-white/90 uppercase px-3 py-1.5 rounded-full border bg-black/40 backdrop-blur-md" style={{ borderColor: `${project.accent}40`, boxShadow: `inset 0 0 10px ${project.accent}15` }}>
                   {t}
                 </span>
               ))}

@@ -2,27 +2,27 @@ import { motion, useMotionValue, useTransform, useSpring, useMotionTemplate } fr
 import { SpiderCrawlButton } from "./SpiderCrawl";
 
 const STATS = [
-  { label: "Projects Shipped", value: "12+" },
-  { label: "Years Coding",     value: "3+"  },
-  { label: "Cups of Coffee",   value: "∞"   },
-  { label: "Bugs Squashed",    value: "9999" },
+  { label: "SYSTEMS ACROSS THE MULTIVERSE", value: "12+" },
+  { label: "MULTIVERSE EXPERIENCE", value: "3+" },
+  { label: "Cups of Coffee", value: "∞" },
+  { label: "Bugs Squashed", value: "9999" },
 ];
 
 const INTERESTS = [
-  "3D / WebGL", "Motion Design", "AI/ML", "Open Source", "UI Systems", "Game Dev",
+  "AI Systems" ,"3D / WebGL", "Motion Design", "Open Source", "UI Systems", "Game Dev",
 ];
 
 export function About() {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  
+
   const springConfig = { damping: 20, stiffness: 150 };
   const x = useSpring(mouseX, springConfig);
   const y = useSpring(mouseY, springConfig);
 
   const rotateX = useTransform(y, [-300, 300], [12, -12]);
   const rotateY = useTransform(x, [-300, 300], [-12, 12]);
-  
+
   const glareX = useTransform(x, [-300, 300], ["0%", "100%"]);
   const glareY = useTransform(y, [-300, 300], ["0%", "100%"]);
   const glareBackground = useMotionTemplate`radial-gradient(circle at ${glareX} ${glareY}, rgba(255, 255, 255, 0.15) 0%, transparent 60%)`;
@@ -42,9 +42,9 @@ export function About() {
     <section id="about" className="relative px-6 py-24 md:py-36 overflow-hidden">
       {/* Spider-Verse Dimensional Rift Background */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
-         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[#ff2b5e]/10 rounded-full blur-[120px] mix-blend-screen animate-[spin_20s_linear_infinite]" />
-         <div className="absolute bottom-1/4 right-1/4 w-[800px] h-[800px] bg-[#5fb6ff]/10 rounded-full blur-[150px] mix-blend-screen animate-[spin_30s_linear_infinite_reverse]" />
-         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-[#ff2b5e]/10 rounded-full blur-[120px] mix-blend-screen animate-[spin_20s_linear_infinite]" />
+        <div className="absolute bottom-1/4 right-1/4 w-[800px] h-[800px] bg-[#5fb6ff]/10 rounded-full blur-[150px] mix-blend-screen animate-[spin_30s_linear_infinite_reverse]" />
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
       </div>
 
       <div className="mx-auto max-w-7xl relative z-10">
@@ -77,16 +77,16 @@ export function About() {
             <motion.div
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              style={{ 
-                rotateX, 
-                rotateY, 
+              style={{
+                rotateX,
+                rotateY,
                 transformStyle: "preserve-3d",
                 boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 60px rgba(95,182,255,0.08), inset 0 0 0 1px rgba(95,182,255,0.15)"
               }}
               className="group relative rounded-2xl border border-transparent bg-card/80 backdrop-blur-xl transition-all duration-300"
             >
               {/* Dynamic Glare */}
-              <motion.div 
+              <motion.div
                 className="pointer-events-none absolute inset-0 z-50 rounded-2xl mix-blend-overlay"
                 style={{ background: glareBackground }}
               />
@@ -145,23 +145,24 @@ export function About() {
                     </div>
                     <h3 className="font-display text-2xl font-bold text-white">Rajat Trehan</h3>
                     <p className="font-mono text-xs text-[#ff2b5e]/80 mt-0.5 uppercase tracking-wider">
-                      Full Stack Developer
+                      Full Stack Developer & AI ENGINEER
                     </p>
                     <div className="mt-2 flex items-center gap-1.5">
                       <motion.span className="size-1.5 rounded-full bg-emerald-400"
                         animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }} />
-                      <span className="font-mono text-[9px] text-emerald-400/70 uppercase tracking-widest">Active</span>
+                      <span className="font-mono text-[9px] text-emerald-400/70 uppercase tracking-widest">SYSTEM ONLINE</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Bio */}
-                <p className="text-sm leading-relaxed text-muted-foreground mb-6" style={{ transform: "translateZ(10px)" }}>
-                  A developer who believes interfaces should feel like experiences, not forms.
-                  I build full-stack applications with a cinematic eye — where every scroll,
-                  hover, and transition is intentional. Obsessed with the intersection of
-                  code, motion, and storytelling.
-                </p>
+                {/* Bio (Premium, mature, sophisticated) */}
+                <div className="relative mb-10 pl-5" style={{ transform: "translateZ(15px)" }}>
+                  <div className="absolute left-0 top-1 bottom-1 w-[2px] bg-gradient-to-b from-[#5fb6ff] to-[#ff2b5e] rounded-full opacity-70 shadow-[0_0_8px_rgba(95,182,255,0.4)]" />
+                  <p className="text-[15px] md:text-[16px] leading-[1.8] text-white/70">
+                    <strong className="font-display text-white text-lg md:text-xl block mb-2 tracking-tight">Bitten by curiosity. Rewired by code.</strong>
+                    I build <strong className="font-semibold text-white">AI-powered web experiences</strong> that feel pulled from another universe — cinematic interfaces, intelligent systems, and interactions engineered to stick in memory long after the tab closes. Somewhere between <strong className="font-semibold text-white">full-stack engineering, motion design, and machine intelligence</strong>… this variant found his calling.
+                  </p>
+                </div>
 
                 {/* stats grid */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
@@ -200,7 +201,7 @@ export function About() {
                   style={{ boxShadow: "0 0 20px rgba(95,182,255,0.08)" } as any}
                 >
                   <span className="relative z-10 inline-block transition-all duration-300 group-hover:scale-105 group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(95,182,255,0.8)]">
-                    [ Download Case File // Resume ]
+                    [ Access Case File // Resume ]
                   </span>
                   <motion.div
                     className="absolute top-0 left-0 h-full w-[200%] bg-gradient-to-r from-transparent via-[#5fb6ff]/10 to-transparent"
@@ -231,11 +232,11 @@ export function About() {
             <div className="group relative rounded-2xl border border-foreground/8 bg-card/60 backdrop-blur-md p-7 overflow-hidden"
               style={{ boxShadow: "var(--shadow-panel)" }}>
               <div className="halftone pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay rounded-2xl" />
-              
+
               {/* animated scanline on hover */}
               <motion.div
-                 className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-[#ff2b5e]/10 to-transparent -translate-y-full group-hover:translate-y-full"
-                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-[#ff2b5e]/10 to-transparent -translate-y-full group-hover:translate-y-full"
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               />
 
               <div className="font-mono text-[9px] uppercase tracking-[0.4em] text-[#ff2b5e]/70 mb-4 flex items-center gap-2">
@@ -255,9 +256,9 @@ export function About() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { icon: "📍", label: "Base of Operations", value: "India", code: "LOC_01" },
-                { icon: "🕐", label: "Time Zone",          value: "IST +5:30", code: "TMR_SYNC" },
-                { icon: "💼", label: "Status",             value: "Open to Work", code: "STS_ACT" },
-                { icon: "🎓", label: "Affiliation",        value: "CS Student", code: "AFF_CS" },
+                { icon: "🕐", label: "Time Zone", value: "IST +5:30", code: "TMR_SYNC" },
+                { icon: "💼", label: "Status", value: "AVAILABLE FOR NEW MISSIONS", code: "STS_ACT" },
+                { icon: "🎓", label: "Affiliation", value: "AI & CS ENGINEER", code: "AFF_CS" },
               ].map((item) => (
                 <div key={item.label}
                   className="group relative border border-foreground/8 bg-card/40 backdrop-blur px-4 py-4 overflow-hidden transition-all duration-300 hover:border-[#ff2b5e]/40 hover:bg-card/80"
@@ -268,15 +269,15 @@ export function About() {
                   {/* High-tech targeting bracket corners */}
                   <div className="absolute top-1 left-1 w-2 h-2 border-t border-l border-[#ff2b5e]/0 group-hover:border-[#ff2b5e]/50 transition-colors" />
                   <div className="absolute bottom-1 right-1 w-2 h-2 border-b border-r border-[#ff2b5e]/0 group-hover:border-[#ff2b5e]/50 transition-colors" />
-                  
+
                   {/* Subtle hover background sweep */}
                   <div className="absolute inset-0 bg-gradient-to-br from-[#ff2b5e]/0 to-[#ff2b5e]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
+
                   <div className="flex justify-between items-start mb-2">
                     <div className="relative z-10 text-lg group-hover:scale-110 transition-transform origin-left">{item.icon}</div>
                     <div className="font-mono text-[6px] tracking-widest text-[#ff2b5e]/30 group-hover:text-[#ff2b5e]/70 transition-colors">{item.code}</div>
                   </div>
-                  
+
                   <div className="relative z-10 font-mono text-[8px] uppercase tracking-widest text-foreground/40 group-hover:text-[#5fb6ff]/70 transition-colors">{item.label}</div>
                   <div className="relative z-10 font-display text-sm font-semibold text-white mt-0.5">{item.value}</div>
                 </div>
