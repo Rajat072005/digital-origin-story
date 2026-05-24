@@ -5,9 +5,9 @@ import rooftop from "@/assets/rooftop.jpg";
 
 const LINKS: { label: string; href: string }[] = [
   { label: "github",   href: "https://github.com/Rajat072005" },
-  { label: "linkedin", href: "https://linkedin.com/in/rajat-trehan" },
-  { label: "twitter",  href: "https://twitter.com" },
-  { label: "email",    href: "mailto:rajattrehan7@gmail.com" },
+  { label: "linkedin", href: "https://www.linkedin.com/in/rajat-trehan-92a304332/" },
+  { label: "leetcode",  href: "https://leetcode.com/u/RAJATTREHAN/" },
+  { label: "email",    href: "mailto:trehanrajat10@gmail.com" },
 ];
 
 export function Footer() {

@@ -195,7 +195,7 @@ export function About() {
                 {/* CV download */}
                 <SpiderCrawlButton
                   as="div"
-                  onClick={() => window.open("/resume.pdf", "_blank")}
+                  onClick={() => window.open("https://drive.google.com/file/d/1aHfPUuwJPXy5TdmwNfzolbFVWGf0j71k/view?usp=drive_link", "_blank")}
                   data-cursor="hover"
                   className="group relative w-full overflow-hidden text-center border border-[#5fb6ff]/30 bg-[#5fb6ff]/5 py-2.5 font-mono text-[10px] uppercase tracking-[0.4em] text-[#5fb6ff] transition-all duration-300 hover:bg-[#5fb6ff]/10 hover:border-[#5fb6ff]/80 rounded-xl cursor-none"
                   style={{ boxShadow: "0 0 20px rgba(95,182,255,0.08)" } as any}
