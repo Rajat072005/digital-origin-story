@@ -1,5 +1,5 @@
-import { motion } from "motion/react";
-import { useState } from "react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { useState, useRef } from "react";
 
 const PANELS = [
   {
@@ -33,10 +33,38 @@ const PANELS = [
 
 export function OriginStory() {
   const [hovered, setHovered] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start end", "end start"] });
+  const webY = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
 
   return (
-    <section id="about-origin" className="relative px-6 py-32 md:py-44">
-      <div className="mx-auto max-w-7xl">
+    <section id="about-origin" ref={containerRef} className="relative px-6 py-32 md:py-44 overflow-hidden">
+      {/* Cinematic Spider Web Background */}
+      <motion.div 
+        style={{ y: webY }}
+        className="absolute inset-0 -z-10 flex items-center justify-center opacity-[0.15] pointer-events-none"
+      >
+        <svg className="w-[150vw] h-[150vh] min-w-[1200px] max-w-none" viewBox="0 0 1000 1000" fill="none">
+          <g stroke="#5fb6ff" strokeWidth="0.7">
+            {/* Radial threads */}
+            {Array.from({ length: 24 }).map((_, i) => (
+              <line key={`ray-${i}`} x1="500" y1="500" x2={500 + 800 * Math.cos(i * 15 * Math.PI / 180)} y2={500 + 800 * Math.sin(i * 15 * Math.PI / 180)} />
+            ))}
+            {/* Polygonal web rings */}
+            {Array.from({ length: 14 }).map((_, i) => (
+              <path key={`ring-${i}`} d={
+                Array.from({ length: 25 }).map((_, j) => {
+                  const angle = j * 15 * Math.PI / 180;
+                  const r = (i + 1) * 55 + (j % 2 === 0 ? 5 : -5); // organic irregularity
+                  return `${j === 0 ? 'M' : 'L'} ${500 + r * Math.cos(angle)} ${500 + r * Math.sin(angle)}`;
+                }).join(" ")
+              } strokeLinejoin="round" />
+            ))}
+          </g>
+        </svg>
+      </motion.div>
+
+      <div className="mx-auto max-w-7xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -56,20 +84,31 @@ export function OriginStory() {
           {PANELS.map((p, i) => (
             <motion.article
               key={p.title}
-              initial={{ opacity: 0, y: 60, rotate: i % 2 ? 1.2 : -1.2 }}
-              whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+              initial={{ opacity: 0, y: 60, rotate: i % 2 ? 1.5 : -1.5 }}
+              whileInView={{ opacity: 1, y: 0, rotate: i % 2 ? 1.5 : -1.5 }}
               viewport={{ once: true, margin: "-15%" }}
               transition={{ duration: 0.9, delay: i * 0.12, ease: [0.2, 0.8, 0.2, 1] }}
-              whileHover={{ y: -6 }}
+              whileHover={{ y: -6, rotate: 0, scale: 1.02 }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
-              className="group relative overflow-hidden rounded-2xl border border-foreground/10 bg-card backdrop-blur-md cursor-none"
+              className="group relative rounded-2xl border border-foreground/10 bg-card/90 backdrop-blur-md cursor-none"
               data-cursor="hover"
-              style={{ boxShadow: "var(--shadow-panel)" }}
+              style={{ boxShadow: hovered === i ? `0 20px 40px -15px ${p.color}` : "var(--shadow-panel)" }}
             >
-              {/* halftone wash */}
-              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${p.accent} opacity-70`} />
-              <div className="halftone pointer-events-none absolute inset-0 opacity-40 mix-blend-overlay" />
+              {/* Suspension thread */}
+              <div className="absolute left-1/2 bottom-[99%] w-px h-[400px] -translate-x-1/2 bg-gradient-to-t from-white/40 to-transparent pointer-events-none z-[-1]" />
+              
+              {/* Inner clipped backgrounds */}
+              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <div className={`absolute inset-0 bg-gradient-to-br ${p.accent} opacity-70`} />
+                <div 
+                  className="absolute inset-0 opacity-[0.15] mix-blend-overlay" 
+                  style={{ 
+                    backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", 
+                    backgroundSize: "6px 6px" 
+                  }} 
+                />
+              </div>
 
               {/* glowing edge on hover */}
               <motion.div
@@ -86,10 +125,16 @@ export function OriginStory() {
 
               <div className="relative p-7 md:p-8">
                 <div className="mb-6 flex items-center gap-3">
-                  <span className="font-mono text-7xl font-black leading-none text-foreground/15">
+                  <span 
+                    className="font-mono text-7xl font-black leading-none text-foreground/15 transition-all duration-300"
+                    style={{
+                      textShadow: hovered === i ? "3px 0px 0px rgba(255,0,0,0.5), -3px 0px 0px rgba(0,255,255,0.5)" : "none",
+                      color: hovered === i ? "rgba(255,255,255,0.25)" : ""
+                    }}
+                  >
                     0{i + 1}
                   </span>
-                  <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/60">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/60 group-hover:text-foreground/90 transition-colors">
                     {p.chapter}
                   </span>
                 </div>
